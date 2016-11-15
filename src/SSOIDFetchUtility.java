@@ -3,6 +3,8 @@
  */
 
 
+import org.apache.poi.POITextExtractor;
+import org.apache.poi.extractor.OLE2ExtractorFactory;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,20 +25,47 @@ public class SSOIDFetchUtility
 
     public static void main(String[] args) throws IOException
     {
-        String excelFilePath = "C:/Users/Me/Downloads/test1.xls";
-        System.out.println ("Starting parsing!");
-        ReadInWorkbook(excelFilePath);
+        String excelFilePath = "C:/Users/Me/Downloads/PathTest";
 
+        //all directories that need to be visited
+        Stack <File> directoryStack = new Stack <>();
+        directoryStack.push (new File (excelFilePath));
+
+        System.out.println ("Starting parsing!");
+
+        //this will go through all possible paths within the directory
+        while (!directoryStack.isEmpty())
+        {
+            //go through each directory and push all directories on the stack or work on the workbooks
+            for (File a : directoryStack.pop().listFiles())
+            {
+                //if it is not a directory then work on it and get ssoids
+                if (!a.isDirectory())
+                {
+                   ReadInWorkbook(a);
+                }
+                //push it to the stack
+                else
+                    directoryStack.push(a);
+
+            }
+        }
+
+        //check all of the ssoids in set
+        Iterator <String> idIterator = ssoidSet.iterator();
+
+        while (idIterator.hasNext())
+            System.out.println (idIterator.next());
     }
 
-    private static void ReadInWorkbook (String path)
+    private static void ReadInWorkbook (File file)
     {
          /*
          * Each workbook is split into two parts! The header which contains information about the assessment
          * and the second part is the data area where all the information is.
          */
         Workbook workbook = null;
-        FileInputStream inputStream = null;
+        FileInputStream inputStream;
 
         //these are indexes that specify what column each type of data is in in the data area
         int idIndex = -1;
@@ -46,7 +75,7 @@ public class SSOIDFetchUtility
 
         try
         {
-            inputStream = new FileInputStream(new File(path));
+            inputStream = new FileInputStream(file);
             workbook = new HSSFWorkbook(inputStream);
         }
         catch (IOException e)
@@ -117,6 +146,8 @@ public class SSOIDFetchUtility
                         {
                             ssoidSet.add(cell.toString());
                         }
+                        //go ahead and break out of the while loop and go to the next row
+                        break;
                     }
                 }
 
