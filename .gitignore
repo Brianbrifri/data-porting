@@ -1,0 +1,6 @@
+.idea/**/*
+*.xls
+.*.xls
+*.xlsx
+.*.xlsx
+*.iml
