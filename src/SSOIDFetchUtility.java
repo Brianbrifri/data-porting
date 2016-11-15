@@ -1,14 +1,11 @@
 /*
  *Authors: Jacob Taylor
+ * Purpose: This creates a utility that allows the person to fetch all the ssoids within the files
  */
 
-
-import org.apache.poi.POITextExtractor;
-import org.apache.poi.extractor.OLE2ExtractorFactory;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+
+import java.io.*;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.*;
@@ -26,6 +23,7 @@ public class SSOIDFetchUtility
     public static void main(String[] args) throws IOException
     {
         String excelFilePath = "C:/Users/Me/Downloads/PathTest";
+        String outputFilePath = "C:/Users/Me/Downloads/TestOutput.txt";
 
         //all directories that need to be visited
         Stack <File> directoryStack = new Stack <>();
@@ -51,11 +49,45 @@ public class SSOIDFetchUtility
             }
         }
 
-        //check all of the ssoids in set
-        Iterator <String> idIterator = ssoidSet.iterator();
+        WriteSetToFile(ssoidSet, new File (outputFilePath));
+    }
 
-        while (idIterator.hasNext())
-            System.out.println (idIterator.next());
+    private static void WriteSetToFile (Set<String> set, File file)
+    {
+        FileWriter writer = null;
+        BufferedWriter bufferedWriter = null;
+
+        try
+        {
+            writer = new FileWriter(file);
+            bufferedWriter = new BufferedWriter(writer);
+        } catch (IOException e)
+        {
+            System.out.println (e.toString());
+        }
+
+        Iterator<String> iterator = set.iterator();
+
+        while (iterator.hasNext())
+        {
+            try
+            {
+                bufferedWriter.write(iterator.next());
+                bufferedWriter.newLine();
+            }catch (IOException e)
+            {
+                System.out.println (e.toString());
+            }
+        }
+
+        try
+        {
+            bufferedWriter.close();
+            writer.close();
+        }catch (IOException e)
+        {
+            System.out.println (e.toString());
+        }
     }
 
     private static void ReadInWorkbook (File file)
@@ -65,7 +97,7 @@ public class SSOIDFetchUtility
          * and the second part is the data area where all the information is.
          */
         Workbook workbook = null;
-        FileInputStream inputStream;
+        FileInputStream inputStream = null;
 
         //these are indexes that specify what column each type of data is in in the data area
         int idIndex = -1;
@@ -80,7 +112,7 @@ public class SSOIDFetchUtility
         }
         catch (IOException e)
         {
-            System.out.println ("File not found");
+            System.out.println (e.toString());
         }
 
         Sheet firstSheet = null;
@@ -152,6 +184,14 @@ public class SSOIDFetchUtility
                 }
 
                 columnPosition++;
+            }
+
+            try
+            {
+                inputStream.close();
+            }catch (IOException e)
+            {
+                System.out.println (e.toString());
             }
         }
 
