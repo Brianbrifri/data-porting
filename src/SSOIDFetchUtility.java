@@ -82,8 +82,12 @@ public class SSOIDFetchUtility
 
         try
         {
-            bufferedWriter.close();
-            writer.close();
+            if (bufferedWriter != null) {
+                bufferedWriter.close();
+            }
+            if (writer != null) {
+                writer.close();
+            }
         }catch (IOException e)
         {
             System.out.println (e.toString());
