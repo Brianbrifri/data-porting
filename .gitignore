@@ -6,4 +6,5 @@ data-porting.iml
 *.xlsx
 .*.xlsx
 *.iml
+jdbc/jdbc.iml
 out/
