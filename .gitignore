@@ -1,6 +1,9 @@
-.idea/**/*
+.idea/workspace.xml
+.idea/libraries
+data-porting.iml
 *.xls
 .*.xls
 *.xlsx
 .*.xlsx
 *.iml
+out/
