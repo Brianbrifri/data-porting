@@ -18,12 +18,12 @@ import org.apache.poi.ss.usermodel.Workbook;
 public class SSOIDFetchUtility
 {
     //set of all ssoids that does not contain any duplicates
-    private static HashSet<String> ssoidSet = new HashSet<>();
-
-    public static void main(String[] args) throws IOException
+    private static Set<String> ssoidSet = new HashSet<>();
+    String excelFilePath = "/home/b-kizzle/Downloads/";
+    //static String excelFilePath = "/home/b-kizzle/Downloads/ARTIFACT_LEVEL 1_MOSPE_STANDARD1_CONTENTKNOWLEDGE.xls";
+    String outputFilePath = "/home/b-kizzle/TestOutput.txt";
+    public void run() throws IOException
     {
-        String excelFilePath = "C:/Users/Me/Downloads/PathTest";
-        String outputFilePath = "C:/Users/Me/Downloads/TestOutput.txt";
 
         //all directories that need to be visited
         Stack <File> directoryStack = new Stack <>();
@@ -40,7 +40,10 @@ public class SSOIDFetchUtility
                 //if it is not a directory then work on it and get ssoids
                 if (!a.isDirectory())
                 {
-                   ReadInWorkbook(a);
+                    if(a.getName().endsWith(".xls")) {
+                        ReadInWorkbook(a);
+                    }
+
                 }
                 //push it to the stack
                 else
@@ -72,8 +75,12 @@ public class SSOIDFetchUtility
         {
             try
             {
-                bufferedWriter.write(iterator.next());
-                bufferedWriter.newLine();
+                if (bufferedWriter != null) {
+                    bufferedWriter.write(iterator.next());
+                }
+                if (bufferedWriter != null) {
+                    bufferedWriter.newLine();
+                }
             }catch (IOException e)
             {
                 System.out.println (e.toString());
@@ -122,80 +129,87 @@ public class SSOIDFetchUtility
         Sheet firstSheet = null;
         try
         {
-            firstSheet = workbook.getSheetAt(0);
+            if (workbook != null) {
+                firstSheet = workbook.getSheetAt(0);
+            }
         }catch (NullPointerException e)
         {
             System.out.println (e.toString());
         }
 
-        Iterator<Row> iterator = firstSheet.iterator();
+        Iterator<Row> iterator = null;
+        if (firstSheet != null) {
+            iterator = firstSheet.iterator();
+        }
 
         int columnPosition;
 
         //work on the the cells within the document
-        while (iterator.hasNext()) {
-            Row nextRow = iterator.next();
-            Iterator<Cell> cellIterator = nextRow.cellIterator();
+        if (iterator != null) {
+            while (iterator.hasNext()) {
+                Row nextRow = iterator.next();
+                Iterator<Cell> cellIterator = nextRow.cellIterator();
 
 
 
-            columnPosition = 0;
-            //go through all the cells in each row
-            while (cellIterator.hasNext())
-            {
-                Cell cell = cellIterator.next();
-
-
-                //if the id index is -1 it means that the program has not come accross the correct info
-                if (idIndex  == -1)
+                columnPosition = 0;
+                //go through all the cells in each row
+                while (cellIterator.hasNext())
                 {
-                    //this means we have not come accrossed the header for the data area yet
-                    if (cell.getStringCellValue().compareToIgnoreCase("student") != 0 && !hasEnteredData)
+                    Cell cell = cellIterator.next();
+
+
+                    //if the id index is -1 it means that the program has not come accross the correct info
+                    if (idIndex  == -1)
                     {
-                        //therefore just break out of loop to go to next row
-                        break;
+                        //this means we have not come accrossed the header for the data area yet
+                        if (cell.getStringCellValue().compareToIgnoreCase("student") != 0 && !hasEnteredData)
+                        {
+                            //therefore just break out of loop to go to next row
+                            break;
+                        }
+                        //now entering data area copy the column indexes for each type
+                        else
+                        {
+                            hasEnteredData = true;
+
+                            //copy all indexes down  by checking for keywords in header like ID or date
+                            if (cell.getStringCellValue().contains("ID"))
+                                idIndex =  columnPosition;
+                        }
                     }
-                    //now entering data area copy the column indexes for each type
+                    //we are storing the data
                     else
                     {
-                        hasEnteredData = true;
-
-                        //copy all indexes down  by checking for keywords in header like ID or date
-                        if (cell.getStringCellValue().contains("ID"))
-                            idIndex =  columnPosition;
+                        //add the id to the set if it is a ssoid which cant be parsed to an int
+                        if (columnPosition == idIndex)
+                        {
+                            try
+                            {
+                                //if this can be parsed as a float then that means its an a student id
+                                //not an ssoid
+                                Float.parseFloat(cell.toString());
+                            }
+                            //this means that the id was a ssiod so add it to the set of them that needs to be put into a file
+                            catch (NumberFormatException e)
+                            {
+                                ssoidSet.add(cell.toString());
+                            }
+                            //go ahead and break out of the while loop and go to the next row
+                            break;
+                        }
                     }
+
+                    columnPosition++;
                 }
-                //we are storing the data
-                else
+
+                try
                 {
-                    //add the id to the set if it is a ssoid which cant be parsed to an int
-                    if (columnPosition == idIndex)
-                    {
-                        try
-                        {
-                            //if this can be parsed as a float then that means its an a student id
-                            //not an ssoid
-                            Float.parseFloat(cell.toString());
-                        }
-                        //this means that the id was a ssiod so add it to the set of them that needs to be put into a file
-                        catch (NumberFormatException e)
-                        {
-                            ssoidSet.add(cell.toString());
-                        }
-                        //go ahead and break out of the while loop and go to the next row
-                        break;
-                    }
+                    inputStream.close();
+                }catch (IOException e)
+                {
+                    System.out.println (e.toString());
                 }
-
-                columnPosition++;
-            }
-
-            try
-            {
-                inputStream.close();
-            }catch (IOException e)
-            {
-                System.out.println (e.toString());
             }
         }
 

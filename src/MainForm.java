@@ -3,8 +3,11 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 
 public class MainForm {
+
+	SSOIDFetchUtility utility = new SSOIDFetchUtility();
 
 	private JFrame frmDataPorting;
 	private JTextField dataPathTextBox;
@@ -34,7 +37,7 @@ public class MainForm {
 	/**
 	 * Create the application.
 	 */
-	public MainForm() {
+	private MainForm() {
 		initialize();
 	}
 
@@ -83,7 +86,7 @@ public class MainForm {
 		lblPass.setBounds(144, 46, 41, 14);
 		sqlPanel.add(lblPass);
 		lblPass.setFont(new Font("Tahoma", Font.BOLD, 11));
-		
+
 		sqlPassTextBox = new JTextField();
 		sqlPassTextBox.setBounds(182, 43, 86, 20);
 		sqlPanel.add(sqlPassTextBox);
@@ -104,11 +107,9 @@ public class MainForm {
 		frmDataPorting.getContentPane().add(btnBrowse);
 		
 		btnConvert = new JButton("Convert");
-		btnConvert.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				
-			}
-		});
+//		btnConvert.addActionListener(arg0 -> {
+//
+//		});
 		btnConvert.setAction(action_1);
 		btnConvert.setBounds(108, 253, 89, 23);
 		frmDataPorting.getContentPane().add(btnConvert);
@@ -116,23 +117,33 @@ public class MainForm {
 	private class SwingAction extends AbstractAction {
 		JFileChooser chooser = new JFileChooser();
 		
-		public SwingAction() {
+		SwingAction() {
 			putValue(NAME, "SwingAction");
 			putValue(SHORT_DESCRIPTION, "Some short description");
 		}
 		public void actionPerformed(ActionEvent e) {
+			chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 			if (chooser.showOpenDialog(frmDataPorting) == JFileChooser.APPROVE_OPTION) {
 				dataPathTextBox.setText(chooser.getSelectedFile().getAbsolutePath());
 			}			
 		}
 	}
 	private class SwingAction_1 extends AbstractAction {
-		public SwingAction_1() {
+		SwingAction_1() {
 			putValue(NAME, "Convert");
 			putValue(SHORT_DESCRIPTION, "Some short description");
 		}
 		public void actionPerformed(ActionEvent e) {
 			// Do some converting!
+			System.out.println(dataPathTextBox.getText());
+			utility.excelFilePath = dataPathTextBox.getText();
+			utility.outputFilePath = "~/";
+			System.out.println(utility.excelFilePath);
+			try {
+				utility.run();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
 		}
 	}
 }
