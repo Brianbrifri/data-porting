@@ -3,6 +3,7 @@
  * Purpose: This creates a utility that allows the person to fetch all the ssoids within the files
  */
 
+import jdk.nashorn.internal.runtime.regexp.joni.constants.Traverse;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
 import java.io.*;
@@ -18,18 +19,33 @@ import org.apache.poi.ss.usermodel.Workbook;
 public class SSOIDFetchUtility
 {
     //set of all ssoids that does not contain any duplicates
-    private static Set<String> ssoidSet = new HashSet<>();
-    String excelFilePath = "/home/b-kizzle/Downloads/";
-    //static String excelFilePath = "/home/b-kizzle/Downloads/ARTIFACT_LEVEL 1_MOSPE_STANDARD1_CONTENTKNOWLEDGE.xls";
+    private Set<String> ssoidSet = new HashSet<>();
+    String excelFilePath = "/home/b-kizzle/Downloads";
     String outputFilePath = "/home/b-kizzle/TestOutput.txt";
     public void run() throws IOException
     {
 
-        //all directories that need to be visited
-        Stack <File> directoryStack = new Stack <>();
-        directoryStack.push (new File (excelFilePath));
+        File f  = new File (excelFilePath);
 
-        System.out.println ("Starting parsing!");
+        //if it is a directory traverse it else just read in the workbook directly
+        if (f.isDirectory())
+            TraverseDirectory (f);
+        else
+        {
+            System.out.println ("Parsing file");
+            ReadInWorkbook(f);
+        }
+
+        WriteSetToFile(ssoidSet, new File (outputFilePath));
+    }
+
+    private void TraverseDirectory(File file)
+    {
+        //all directories that need to be visited
+        Stack<File> directoryStack = new Stack<>();
+        directoryStack.push(file);
+
+        System.out.println("Starting parsing directory!");
 
         //this will go through all possible paths within the directory
         while (!directoryStack.isEmpty())
@@ -52,10 +68,9 @@ public class SSOIDFetchUtility
             }
         }
 
-        WriteSetToFile(ssoidSet, new File (outputFilePath));
     }
 
-    private static void WriteSetToFile (Set<String> set, File file)
+    private void WriteSetToFile (Set<String> set, File file)
     {
         FileWriter writer = null;
         BufferedWriter bufferedWriter = null;
@@ -71,19 +86,15 @@ public class SSOIDFetchUtility
 
         Iterator<String> iterator = set.iterator();
 
-        while (iterator.hasNext())
-        {
-            try
-            {
+        while (iterator.hasNext()) {
+            try {
                 if (bufferedWriter != null) {
                     bufferedWriter.write(iterator.next());
-                }
-                if (bufferedWriter != null) {
                     bufferedWriter.newLine();
                 }
-            }catch (IOException e)
-            {
-                System.out.println (e.toString());
+
+            } catch (IOException e) {
+                System.out.println(e.toString());
             }
         }
 
@@ -101,7 +112,7 @@ public class SSOIDFetchUtility
         }
     }
 
-    private static void ReadInWorkbook (File file)
+    private void ReadInWorkbook (File file)
     {
          /*
          * Each workbook is split into two parts! The header which contains information about the assessment

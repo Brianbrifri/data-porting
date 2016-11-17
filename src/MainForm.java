@@ -137,7 +137,7 @@ public class MainForm {
 			// Do some converting!
 			System.out.println(dataPathTextBox.getText());
 			utility.excelFilePath = dataPathTextBox.getText();
-			utility.outputFilePath = "~/";
+			//utility.outputFilePath = "~/home/b-kizzle/";
 			System.out.println(utility.excelFilePath);
 			try {
 				utility.run();
