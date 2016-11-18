@@ -15,18 +15,18 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
-public class Main
+public class Parser
 {
 
-    public static void main(String[] args) throws IOException
+    public void Parse(String path) throws IOException
     {
-        String excelFilePath = "C:/Users/Me/Downloads/test1.xls";
-        System.out.println ("REading!");
+        String excelFilePath = path;
+        System.out.println ("Reading!");
         ReadInWorkbook(excelFilePath);
 
     }
 
-    private static void ReadInWorkbook (String path)
+    private void ReadInWorkbook (String path)
     {
          /*
          * Each workbook is split into two parts! The header which contains information about the assessment

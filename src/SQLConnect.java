@@ -1,16 +1,19 @@
 import java.sql.*;
 
-public class connect {
+public class SQLConnect {
     //Driver and URL
-    static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-    static final String DB_URL = "jdbc:mysql://lacuna.dhcp.umsl.edu:3306/test";
+    String JDBC_DRIVER = "com.mysql.jdbc.Driver";
+    String DB_URL = "jdbc:mysql://lacuna.dhcp.umsl.edu:3306/test";
 
     //User credentials
-    static final String USER = "";
-    static final String PASS = "";
+    String USER = "";
+    String PASS = "";
 
-    public static void main(String[] args)
+    public void connect(String usr, String pw)
     {
+
+        USER = usr;
+        PASS = pw;
         Connection conn = null;
         Statement stmt = null;
 
