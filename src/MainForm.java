@@ -89,7 +89,7 @@ public class MainForm {
 		sqlPanel.add(lblPass);
 		lblPass.setFont(new Font("Tahoma", Font.BOLD, 11));
 
-		sqlPassTextBox = new JTextField();
+		sqlPassTextBox = new JPasswordField();
 		sqlPassTextBox.setBounds(182, 43, 86, 20);
 		sqlPanel.add(sqlPassTextBox);
 		sqlPassTextBox.setColumns(10);
