@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.net.URL;
 
 public class MainForm {
 
@@ -16,7 +17,8 @@ public class MainForm {
 	private JLabel lblUser;
 	private JLabel lblPass;
 	private JTextField sqlPassTextBox;
-	private final Action action = new SwingAction();
+    private JTextArea outputTextArea;
+    private final Action action = new SwingAction();
 	private JButton btnConvert;
 	private final Action action_1 = new SwingAction_1();
 
@@ -96,7 +98,7 @@ public class MainForm {
 		outputScrollPane.setBounds(10, 129, 284, 113);
 		frmDataPorting.getContentPane().add(outputScrollPane);
 		
-		JTextArea outputTextArea = new JTextArea();
+		outputTextArea = new JTextArea();
 		outputScrollPane.setViewportView(outputTextArea);
 		outputTextArea.setText("");
 		outputTextArea.setEditable(false);
@@ -107,9 +109,6 @@ public class MainForm {
 		frmDataPorting.getContentPane().add(btnBrowse);
 		
 		btnConvert = new JButton("Convert");
-//		btnConvert.addActionListener(arg0 -> {
-//
-//		});
 		btnConvert.setAction(action_1);
 		btnConvert.setBounds(108, 253, 89, 23);
 		frmDataPorting.getContentPane().add(btnConvert);
@@ -136,9 +135,13 @@ public class MainForm {
 		public void actionPerformed(ActionEvent e) {
 			// Do some converting!
 			System.out.println(dataPathTextBox.getText());
-			utility.excelFilePath = dataPathTextBox.getText();
-			//utility.outputFilePath = "~/home/b-kizzle/";
-			System.out.println(utility.excelFilePath);
+            if(!dataPathTextBox.getText().equals("")) {
+                utility.excelFilePath = dataPathTextBox.getText();
+            }
+            outputTextArea.append("Reading in directory: " + utility.excelFilePath + "\n");
+            utility.outputFilePath = System.getProperty("user.dir") + "\\SSOIDList.txt";
+            outputTextArea.append("Saving output file to: " + utility.outputFilePath + "\n");
+			System.out.println(utility.outputFilePath);
 			try {
 				utility.run();
 			} catch (IOException ex) {

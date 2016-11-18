@@ -5,3 +5,4 @@
 *.xlsx
 .*.xlsx
 out/
+SSOIDList.txt

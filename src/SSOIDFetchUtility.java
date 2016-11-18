@@ -20,8 +20,8 @@ public class SSOIDFetchUtility
 {
     //set of all ssoids that does not contain any duplicates
     private Set<String> ssoidSet = new HashSet<>();
-    String excelFilePath = "/home/b-kizzle/Downloads";
-    String outputFilePath = "/home/b-kizzle/TestOutput.txt";
+    String excelFilePath = System.getProperty("user.dir");
+    String outputFilePath = System.getProperty("user.dir") + "\\SSOIDList.txt";
     void run() throws IOException
     {
 
