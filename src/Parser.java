@@ -20,13 +20,49 @@ public class Parser
 
     public void Parse(String path) throws IOException
     {
-        String excelFilePath = path;
         System.out.println ("Reading!");
-        ReadInWorkbook(excelFilePath);
+        File f = new File (path);
+
+        //if it is a directory traverse it else just read in the workbook directly
+        if (f.isDirectory())
+            TraverseDirectory (f);
+        else
+        {
+            System.out.println ("Parsing file");
+            ReadInWorkbook(f);
+        }
+    }
+
+    private void TraverseDirectory(File file)
+    {
+        //all directories that need to be visited
+        Stack<File> directoryStack = new Stack<>();
+        directoryStack.push(file);
+
+        System.out.println("Starting parsing directory!");
+
+        //this will go through all possible paths within the directory
+        while (!directoryStack.isEmpty()) {
+            //go through each directory and push all directories on the stack or work on the workbooks
+            for (File a : directoryStack.pop().listFiles()) {
+                //if it is not a directory then work on it and get ssoids
+                if (!a.isDirectory()) {
+                    if(a.getName().endsWith(".xls")) {
+                        ReadInWorkbook(a);
+                    }
+
+                }
+                //push it to the stack
+                else
+                    directoryStack.push(a);
+
+            }
+        }
 
     }
 
-    private void ReadInWorkbook (String path)
+
+    private void ReadInWorkbook (File file)
     {
          /*
          * Each workbook is split into two parts! The header which contains information about the assessment
@@ -49,7 +85,7 @@ public class Parser
 
         try
         {
-            inputStream = new FileInputStream(new File(path));
+            inputStream = new FileInputStream(file);
             workbook = new HSSFWorkbook(inputStream);
             System.out.println ("Done this");
         }
