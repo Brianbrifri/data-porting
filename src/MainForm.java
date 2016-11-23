@@ -8,6 +8,7 @@ import java.io.IOException;
 public class MainForm {
 
 	SSOIDFetchUtility utility = new SSOIDFetchUtility();
+	Parser parser = new Parser ();
 
 	private JFrame frmDataPorting;
 	private JTextField dataPathTextBox;
@@ -140,7 +141,7 @@ public class MainForm {
 			//utility.outputFilePath = "~/home/b-kizzle/";
 			System.out.println(utility.excelFilePath);
 			try {
-				utility.run();
+				parser.Parse(dataPathTextBox.getText());
 			} catch (IOException ex) {
 				ex.printStackTrace();
 			}

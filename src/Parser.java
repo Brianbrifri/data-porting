@@ -71,14 +71,6 @@ public class Parser
         Workbook workbook = null;
         FileInputStream inputStream = null;
 
-        //these are indexes that specify what column each type of data is in in the data area
-        int idIndex = -1;
-        int dateIndex = -1;
-
-        //these stacks will store the specific information
-        //this is most likely temp
-        Stack<String> idStack = new Stack <>();
-        Stack<String> dateStack = new Stack <>();
 
         //flag to check if the program is in the data area
         boolean hasEnteredData = false;
@@ -105,80 +97,52 @@ public class Parser
 
         Iterator<Row> iterator = firstSheet.iterator();
 
-        int columnPosition;
 
         //work on the the cells within the document
-        while (iterator.hasNext()) {
+        while (iterator.hasNext())
+        {
             Row nextRow = iterator.next();
-            Iterator<Cell> cellIterator = nextRow.cellIterator();
 
-
-
-            columnPosition = 0;
-            //go through all the cells in each row
-            while (cellIterator.hasNext())
+            //look for the start of the data area
+            if (!hasEnteredData)
             {
-                Cell cell = cellIterator.next();
+                Cell cell = nextRow.cellIterator().next();
 
-
-                //if the id index is -1 it means that the program has not come accross the correct info
-                if (idIndex  == -1 || dateIndex == -1)
+                //Student in first cell means that the next row will be the data rea
+                if (cell.toString().compareTo("Student") == 0)
                 {
-                    //this means we have not come accrossed the header for the data area yet
-                    if (cell.getStringCellValue().compareToIgnoreCase("student") != 0 && !hasEnteredData)
-                    {
-                        //therefore just break out of loop to go to next row
-                        System.out.println(cell.getStringCellValue());
-                        break;
-                    }
-                    //now entering data area copy the column indexes for each type
-                    else
-                    {
-                        System.out.println (cell.toString());
-                        hasEnteredData = true;
-
-                        //copy all indexes down  by checking for keywords in header like ID or date
-                       if (cell.getStringCellValue().contains("ID"))
-                           idIndex =  columnPosition;
-                        else if (cell.getStringCellValue().contains("Date"))
-                            dateIndex = columnPosition;
-                    }
+                    hasEnteredData = true;
                 }
-                //we are storing the data
-                else
-                {
-                    if (columnPosition == idIndex)
-                    {
-                        System.out.println ("Push to id");
-                        idStack.push(cell.toString());
-                    }
-                    else if (columnPosition == dateIndex)
-                    {
-                        System.out.println ("Push to date");
-                        dateStack.push(cell.toString());
-                    }
-                }
-
-                columnPosition++;
+            }
+            else
+            {
+                RowToDatabase(nextRow.cellIterator());
             }
         }
 
+    }
 
-        //popping all stacks just to show the correct info in console
-        while (!idStack.isEmpty() || !dateStack.isEmpty())
+    void RowToDatabase (Iterator<Cell> iterator)
+    {
+        String student = iterator.next().toString();
+        String stuID = iterator.next().toString();
+        String evaluator = iterator.next().toString();
+        String completionDate = iterator.next().toString();
+        String isPublished = iterator.next().toString();
+        System.out.println (isPublished);
+
+        Cell cell;
+        
+        //now get information on quality levels
+        while (iterator.hasNext())
         {
-            System.out.println(idStack.pop());
-            System.out.println (dateStack.pop());
-        }
-        try
-        {
-            workbook.close();
-            inputStream.close();
-        }catch (Exception e)
-        {
-            System.out.println (e.toString());
+            cell = iterator.next();
+
+            if (!cell.toString().isEmpty())
+                System.out.print (cell.toString() + ", ");
         }
 
+        System.out.println ("");
     }
 
 }
