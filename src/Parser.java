@@ -7,6 +7,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Stack;
 
@@ -17,6 +18,8 @@ import org.apache.poi.ss.usermodel.Workbook;
 
 public class Parser
 {
+    //this holds the information about what quality level the value belongs to
+    private ArrayList <String> qualityHeaders = new ArrayList<>();
 
     public void Parse(String path) throws IOException
     {
@@ -111,6 +114,16 @@ public class Parser
                 //Student in first cell means that the next row will be the data rea
                 if (cell.toString().compareTo("Student") == 0)
                 {
+                    //get and store the string headers for each of the quality levels
+                    int i = 5;
+                    cell = nextRow.getCell(5);
+
+                    while (!cell.toString().isEmpty())
+                    {
+                        qualityHeaders.add(cell.toString());
+                        i++;
+                        cell = nextRow.getCell(i);
+                    }
                     hasEnteredData = true;
                 }
             }
@@ -132,6 +145,8 @@ public class Parser
         System.out.println (isPublished);
 
         Cell cell;
+
+        int qualityIndex = 0;
         
         //now get information on quality levels
         while (iterator.hasNext())
@@ -139,7 +154,9 @@ public class Parser
             cell = iterator.next();
 
             if (!cell.toString().isEmpty())
-                System.out.print (cell.toString() + ", ");
+                System.out.print (qualityHeaders.get(qualityIndex)+ ":" + cell.toString() + ", ");
+
+            qualityIndex++;
         }
 
         System.out.println ("");
