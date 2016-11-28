@@ -19,7 +19,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 public class Parser
 {
     //this holds the information about what quality level the value belongs to
-    private ArrayList <String> qualityHeaders = new ArrayList<>();
+    private ArrayList<String> qualityHeaders = new ArrayList<>();
 
     public void Parse(String path) throws IOException
     {
@@ -31,7 +31,7 @@ public class Parser
             TraverseDirectory (f);
         else
         {
-            System.out.println ("Parsing file");
+            System.out.println("Parsing file");
             ReadInWorkbook(f);
         }
     }
@@ -114,6 +114,9 @@ public class Parser
                 //Student in first cell means that the next row will be the data rea
                 if (cell.toString().compareTo("Student") == 0)
                 {
+                    //make sure no old headers from other files are still around
+                    qualityHeaders.clear();
+
                     //get and store the string headers for each of the quality levels
                     int i = 5;
                     cell = nextRow.getCell(5);
@@ -121,6 +124,7 @@ public class Parser
                     while (!cell.toString().isEmpty())
                     {
                         qualityHeaders.add(cell.toString());
+                        System.out.println (i + ": " + cell.toString() + "\n");
                         i++;
                         cell = nextRow.getCell(i);
                     }
@@ -142,21 +146,16 @@ public class Parser
         String evaluator = iterator.next().toString();
         String completionDate = iterator.next().toString();
         String isPublished = iterator.next().toString();
-        System.out.println (isPublished);
 
         Cell cell;
 
-        int qualityIndex = 0;
-        
-        //now get information on quality levels
-        while (iterator.hasNext())
+
+        //pair quality header with actual amounts
+        for (String header : qualityHeaders)
         {
             cell = iterator.next();
 
-            if (!cell.toString().isEmpty())
-                System.out.print (qualityHeaders.get(qualityIndex)+ ":" + cell.toString() + ", ");
-
-            qualityIndex++;
+            System.out.print(header + ":" + cell.toString() + "\n");
         }
 
         System.out.println ("");
