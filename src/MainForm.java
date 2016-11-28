@@ -137,9 +137,9 @@ public class MainForm {
 		public void actionPerformed(ActionEvent e) {
 			// Do some converting!
 			System.out.println(dataPathTextBox.getText());
-			utility.excelFilePath = dataPathTextBox.getText();
+			//utility.excelFilePath = dataPathTextBox.getText();
 			//utility.outputFilePath = "~/home/b-kizzle/";
-			System.out.println(utility.excelFilePath);
+			//System.out.println(utility.excelFilePath);
 			try {
 				parser.Parse(dataPathTextBox.getText());
 			} catch (IOException ex) {
