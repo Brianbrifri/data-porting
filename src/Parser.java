@@ -19,7 +19,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 
 public class Parser
 {
-    final int BEGIN_DATA = 5;
+    final int BEGIN_DATA = 6;
     //this holds the information about what quality level the value belongs to
     private ArrayList<String> qualityHeaders = new ArrayList<>();
 
@@ -161,6 +161,8 @@ public class Parser
         String evaluator = iterator.next().toString();
         String completionDate = iterator.next().toString();
         String isPublished = iterator.next().toString();
+        String completionStatus = iterator.next().toString();
+        
         Cell cell;
 
 
