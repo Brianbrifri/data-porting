@@ -32,7 +32,9 @@ public class Parser
         else
         {
             System.out.println("Parsing file");
-            ReadInWorkbook(f);
+            if(f.getName().endsWith(".xls")) {
+                ReadInWorkbook(f);
+            }
         }
     }
 
@@ -78,6 +80,7 @@ public class Parser
         //flag to check if the program is in the data area
         boolean hasEnteredData = false;
 
+
         try
         {
             inputStream = new FileInputStream(file);
@@ -98,7 +101,10 @@ public class Parser
             System.out.println (e.toString());
         }
 
-        Iterator<Row> iterator = firstSheet.iterator();
+        Iterator<Row> iterator = null;
+        if (firstSheet != null) {
+            iterator = firstSheet.iterator();
+        }
 
 
         //work on the the cells within the document
@@ -109,11 +115,14 @@ public class Parser
             //look for the start of the data area
             if (!hasEnteredData)
             {
-                Cell cell = nextRow.cellIterator().next();
+                Cell cell = null;
+                if(nextRow.cellIterator().hasNext()) {
+                    cell = nextRow.cellIterator().next();
+                }
+
 
                 //Student in first cell means that the next row will be the data rea
-                if (cell.toString().compareTo("Student") == 0)
-                {
+                if (cell != null && cell.toString().compareTo("Student") == 0) {
                     //make sure no old headers from other files are still around
                     qualityHeaders.clear();
 
@@ -121,10 +130,10 @@ public class Parser
                     int i = 5;
                     cell = nextRow.getCell(5);
 
-                    while (!cell.toString().isEmpty())
-                    {
+                    while (cell != null && !cell.toString().isEmpty()) {
+
                         qualityHeaders.add(cell.toString());
-                        System.out.println (i + ": " + cell.toString() + "\n");
+                        System.out.println(i + ": " + cell.toString() + "\n");
                         i++;
                         cell = nextRow.getCell(i);
                     }

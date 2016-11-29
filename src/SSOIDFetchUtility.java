@@ -31,7 +31,10 @@ public class SSOIDFetchUtility
             TraverseDirectory (f);
         else {
             System.out.println ("Parsing file");
-            ReadInWorkbook(f);
+            if(f.getName().endsWith(".xls")) {
+                ReadInWorkbook(f);
+            }
+
         }
 
         WriteSetToFile(ssoidSet, new File (outputFilePath));

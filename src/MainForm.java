@@ -141,7 +141,8 @@ public class MainForm {
 			//utility.outputFilePath = "~/home/b-kizzle/";
 			//System.out.println(utility.excelFilePath);
 			try {
-				parser.Parse(dataPathTextBox.getText());
+//				parser.Parse(dataPathTextBox.getText());
+				utility.run(dataPathTextBox.getText(), "~/home/b-kizzle/out.txt");
 			} catch (IOException ex) {
 				ex.printStackTrace();
 			}
