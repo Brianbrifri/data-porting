@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Stack;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -133,7 +134,8 @@ public class Parser
 
                     while (cell != null && !cell.toString().isEmpty()) {
 
-                        qualityHeaders.add(cell.toString());
+                        //map the header to the measurement id as well
+                        qualityHeaders.add(mapHeaderToMeasurementID(cell));
                         //System.out.println(i + ": " + cell.toString() + "\n");
                         i++;
                         cell = nextRow.getCell(i);
@@ -162,15 +164,68 @@ public class Parser
         Cell cell;
 
 
+        String measurement = "";
         //pair quality header with actual amounts
         for (String header : qualityHeaders)
         {
             cell = iterator.next();
+            measurement = cell.toString();
 
-            System.out.print(header + ":" + cell.toString() + "\n");
+            //if it is a quality indicator then convert it to anchor id
+            if (header.contains("MECE-QI"))
+            {
+                measurement = dataToAnchorID(measurement);
+            }
+            System.out.print(header + ":" + measurement + "\n");
         }
 
         System.out.println ("");
+    }
+
+    //takes in a cell and transforms the data into an Anchor ID
+    //throws NoSuchElementException if no element is found
+    String dataToAnchorID (String data)
+    {
+        data = data.toLowerCase();
+
+        if (data.contains("emerging"))
+        {
+            return "MOTS-CLEV-EME1";
+        } else if (data.contains("n/a"))
+        {
+            return "MOTS-CLEV-NA";
+        } else if (data.contains("candidate"))
+        {
+            return "MOTS-CLEV-CAND";
+        } else if (data.contains("below"))
+        {
+            return "MOTS-CLEV-BELO";
+        } else if (data.contains("developing"))
+        {
+            return "MOTS-CLEV-DEVE";
+        }
+        else
+        {
+            throw new NoSuchElementException ();
+        }
+    }
+
+    //maps the header to a measurement id in the database
+    String mapHeaderToMeasurementID (Cell cell)
+    {
+        String cell_data = cell.toString().toLowerCase();
+
+        //maps header to quality indicator measurement id
+        if (cell_data.contains("quality indicator"))
+        {
+            //trim the string to get only the numbers needed for quality indicator
+            cell_data =  cell_data.replace("quality indicator", "");
+            cell_data = cell_data.replace("(levels)", "");
+            cell_data = cell_data.replace(" ", "");
+            cell_data = cell_data.replace(".", "");
+            return "MECE-QI" + cell_data;
+        }
+        return cell.toString();
     }
 
 }
