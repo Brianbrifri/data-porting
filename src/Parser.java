@@ -18,6 +18,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 
 public class Parser
 {
+    final int BEGIN_DATA = 5;
     //this holds the information about what quality level the value belongs to
     private ArrayList<String> qualityHeaders = new ArrayList<>();
 
@@ -127,13 +128,13 @@ public class Parser
                     qualityHeaders.clear();
 
                     //get and store the string headers for each of the quality levels
-                    int i = 5;
-                    cell = nextRow.getCell(5);
+                    int i = BEGIN_DATA;
+                    cell = nextRow.getCell(i);
 
                     while (cell != null && !cell.toString().isEmpty()) {
 
                         qualityHeaders.add(cell.toString());
-                        System.out.println(i + ": " + cell.toString() + "\n");
+                        //System.out.println(i + ": " + cell.toString() + "\n");
                         i++;
                         cell = nextRow.getCell(i);
                     }
@@ -142,7 +143,10 @@ public class Parser
             }
             else
             {
-                RowToDatabase(nextRow.cellIterator());
+                if(nextRow.cellIterator().hasNext()) {
+                    RowToDatabase(nextRow.cellIterator());
+                }
+
             }
         }
 
@@ -155,7 +159,6 @@ public class Parser
         String evaluator = iterator.next().toString();
         String completionDate = iterator.next().toString();
         String isPublished = iterator.next().toString();
-
         Cell cell;
 
 

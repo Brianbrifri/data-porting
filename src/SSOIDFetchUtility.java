@@ -32,6 +32,7 @@ public class SSOIDFetchUtility
         else {
             System.out.println ("Parsing file");
             if(f.getName().endsWith(".xls")) {
+                System.out.println(f.getName());
                 ReadInWorkbook(f);
             }
 
@@ -54,13 +55,16 @@ public class SSOIDFetchUtility
                 //if it is not a directory then work on it and get ssoids
                 if (!a.isDirectory()) {
                     if(a.getName().endsWith(".xls")) {
+                        System.out.println(a.getName());
                         ReadInWorkbook(a);
                     }
 
                 }
                 //push it to the stack
-                else
+                else {
+                    System.out.println(a.getName());
                     directoryStack.push(a);
+                }
 
             }
         }
