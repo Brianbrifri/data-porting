@@ -2,13 +2,12 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 
 public class MainForm {
 
 	SSOIDFetchUtility utility = new SSOIDFetchUtility();
-	Parser parser = new Parser ();
+	Parser parser = new Parser();
 
 	private JFrame frmDataPorting;
 	private JTextField dataPathTextBox;

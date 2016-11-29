@@ -9,7 +9,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.Stack;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -81,6 +80,7 @@ public class Parser
 
         //flag to check if the program is in the data area
         boolean hasEnteredData = false;
+        String amountID = "";
 
 
         try
@@ -123,19 +123,26 @@ public class Parser
                 }
 
 
-                //Student in first cell means that the next row will be the data rea
-                if (cell != null && cell.toString().compareTo("Student") == 0) {
+                //Student in first cell means that the next row will be the data area
+                if (cell != null && cell.toString().compareTo("Student") == 0)
+                {
                     //make sure no old headers from other files are still around
                     qualityHeaders.clear();
 
-                    //get and store the string headers for each of the quality levels
+                    //the qualityHeaders start at BEGIN_DATA
                     int i = BEGIN_DATA;
+
+                    //before the quality headers is information about completed use this to get amountID
+                    amountID = MapHeaderToAmountID(nextRow.getCell(i - 1));
+                    System.out.println (amountID);
                     cell = nextRow.getCell(i);
 
-                    while (cell != null && !cell.toString().isEmpty()) {
+                    //get and store the string headers for each of the quality levels
+                    while (cell != null && !cell.toString().isEmpty())
+                    {
 
                         //map the header to the measurement id as well
-                        qualityHeaders.add(mapHeaderToMeasurementID(cell));
+                        qualityHeaders.add(MapHeaderToMeasurementID(cell));
                         //System.out.println(i + ": " + cell.toString() + "\n");
                         i++;
                         cell = nextRow.getCell(i);
@@ -145,8 +152,9 @@ public class Parser
             }
             else
             {
-                if(nextRow.cellIterator().hasNext()) {
-                    RowToDatabase(nextRow.cellIterator());
+                if(nextRow.cellIterator().hasNext())
+                {
+                    RowToDatabase(nextRow.cellIterator(), amountID);
                 }
 
             }
@@ -154,7 +162,7 @@ public class Parser
 
     }
 
-    void RowToDatabase (Iterator<Cell> iterator)
+    private void RowToDatabase (Iterator<Cell> iterator, String amountID)
     {
         String student = iterator.next().toString();
         String stuID = iterator.next().toString();
@@ -176,17 +184,15 @@ public class Parser
             //if it is a quality indicator then convert it to anchor id
             if (header.contains("MECE-QI"))
             {
-                measurement = dataToAnchorID(measurement);
+                measurement = DataToAnchorID(measurement);
+                System.out.println (GenerateSQLQuery("observationID", "trialID", stuID, "RATER", measurement, header, null, completionDate));
             }
-            System.out.print(header + ":" + measurement + "\n");
         }
-
-        System.out.println ("");
     }
 
     //takes in a cell and transforms the data into an Anchor ID
     //throws NoSuchElementException if no element is found
-    String dataToAnchorID (String data)
+   private String DataToAnchorID(String data)
     {
         data = data.toLowerCase();
 
@@ -215,7 +221,7 @@ public class Parser
     }
 
     //maps the header to a measurement id in the database
-    String mapHeaderToMeasurementID (Cell cell)
+   private String MapHeaderToMeasurementID(Cell cell)
     {
         String cell_data = cell.toString().toLowerCase();
 
@@ -240,6 +246,34 @@ public class Parser
             return "MECE-QI" + String.copyValueOf(digits);
         }
         return cell.toString();
+    }
+
+    //maps the header for the completion of a evalution to a amount id
+    //p1 being formative and p2 being summative
+    private String MapHeaderToAmountID(Cell cell)
+    {
+        String string = cell.toString().toLowerCase();
+
+        if (string.contains("p2"))
+        {
+            string = "MEES-CESU-V001";
+        }
+        else if (string.contains("p1"))
+        {
+            string = "MEES-CEFO-V001";
+        }
+        return string;
+    }
+
+    private String GenerateAssessmentTrialID (String candidateID,String amountID, String courseID, String classSection, String term)
+    {
+        return candidateID + "-" + amountID + "-" + courseID + "-" + classSection + "-" + term;
+    }
+
+    private String GenerateSQLQuery (String obsID, String trialID, String empID, String actorType, String anchorID, String measurementID, String response, String observationDate)
+    {
+        return "INSERT INTO \"COE\".\"P2_EQS_OBS\" (\"OBS_ID\", \"TRIAL_ID\", \"EMPLID\", \"ACTOR_TYPE\", \"ANCHOR_ID\", \"MMNT_ID\", \"TEXT_RESPONSE\", \"OBS_DT\")" +
+                "VALUES ('" + obsID +"', '"+ trialID + "', '"+ empID +"', '"+actorType+"', '" + anchorID +"', '"+ measurementID +"', " + response +", TIMESTAMP '" + observationDate +"');";
     }
 
 }
