@@ -162,7 +162,7 @@ public class Parser
         String completionDate = iterator.next().toString();
         String isPublished = iterator.next().toString();
         String completionStatus = iterator.next().toString();
-        
+
         Cell cell;
 
 
@@ -208,7 +208,9 @@ public class Parser
         }
         else
         {
-            throw new NoSuchElementException ();
+            //return N/A for any other value
+            //this may not be the correct approach
+            return "MOTS-CLEV-NA";
         }
     }
 
@@ -220,12 +222,22 @@ public class Parser
         //maps header to quality indicator measurement id
         if (cell_data.contains("quality indicator"))
         {
-            //trim the string to get only the numbers needed for quality indicator
-            cell_data =  cell_data.replace("quality indicator", "");
-            cell_data = cell_data.replace("(levels)", "");
-            cell_data = cell_data.replace(" ", "");
-            cell_data = cell_data.replace(".", "");
-            return "MECE-QI" + cell_data;
+
+            char[] digits = new char[2];
+            int index = 0;
+
+            //go through character by character to find the numbers for quality indicator
+            for (char c : cell_data.toCharArray())
+            {
+                //if a character is a digit add it to digits for QI
+                if (c >= '0' && c <= '9')
+                {
+                    digits [index] = c;
+                    index++;
+                }
+            }
+
+            return "MECE-QI" + String.copyValueOf(digits);
         }
         return cell.toString();
     }
