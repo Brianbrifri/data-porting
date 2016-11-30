@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Stack;
@@ -298,7 +299,43 @@ public class Parser
     private String FormatDate (String date)
     {
         System.out.println (date);
-        return date;
+        String month = MonthToDigits (date.substring(3,6));
+        String day = date.substring(0, 2);
+        String year = date.substring(7, 11);
+        return year + "-" + month + "-" + day;
+    }
+
+    //returns a month as digits instead of abbriviations
+    private String MonthToDigits (String month)
+    {
+        month = month.toLowerCase();
+
+        if (month.contains("jan"))
+            return "01";
+        else if (month.contains("feb"))
+            return "02";
+        else if (month.contains("mar"))
+            return "03";
+        else if (month.contains("apr"))
+            return "04";
+        else if (month.contains("may"))
+            return "05";
+        else if (month.contains("jun"))
+            return "06";
+        else if (month.contains("jul"))
+            return "07";
+        else if (month.contains("aug"))
+            return "08";
+        else if (month.contains("sep"))
+            return "09";
+        else if (month.contains("oct"))
+            return "10";
+        else if (month.contains("nov"))
+            return "11";
+        else if (month.contains("dec"))
+            return "12";
+
+        return month;
     }
 
 }
