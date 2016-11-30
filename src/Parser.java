@@ -7,6 +7,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Stack;
@@ -80,6 +81,7 @@ public class Parser
 
         //flag to check if the program is in the data area
         boolean hasEnteredData = false;
+        //the type of assesment like summative or formative
         String amountID = "";
 
 
@@ -165,9 +167,9 @@ public class Parser
     private void RowToDatabase (Iterator<Cell> iterator, String amountID)
     {
         String student = iterator.next().toString();
-        String stuID = iterator.next().toString();
+        String stuID = RemoveScientificNotation(iterator.next().toString());
         String evaluator = iterator.next().toString();
-        String completionDate = iterator.next().toString();
+        String completionDate = FormatDate(iterator.next().toString());
         String isPublished = iterator.next().toString();
         String completionStatus = iterator.next().toString();
 
@@ -185,7 +187,7 @@ public class Parser
             if (header.contains("MECE-QI"))
             {
                 measurement = DataToAnchorID(measurement);
-                System.out.println (GenerateSQLQuery("observationID", "trialID", stuID, "RATER", measurement, header, null, completionDate));
+                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, "4", "4", "4"), stuID, "RATER", measurement, header, null, completionDate));
             }
         }
     }
@@ -254,7 +256,7 @@ public class Parser
     {
         String string = cell.toString().toLowerCase();
 
-        if (string.contains("p2"))
+        if (string.contains("p2") || string.contains("practicum 2"))
         {
             string = "MEES-CESU-V001";
         }
@@ -274,6 +276,29 @@ public class Parser
     {
         return "INSERT INTO \"COE\".\"P2_EQS_OBS\" (\"OBS_ID\", \"TRIAL_ID\", \"EMPLID\", \"ACTOR_TYPE\", \"ANCHOR_ID\", \"MMNT_ID\", \"TEXT_RESPONSE\", \"OBS_DT\")" +
                 "VALUES ('" + obsID +"', '"+ trialID + "', '"+ empID +"', '"+actorType+"', '" + anchorID +"', '"+ measurementID +"', " + response +", TIMESTAMP '" + observationDate +"');";
+    }
+
+    private String RemoveScientificNotation (String string)
+    {
+        try
+        {
+            DecimalFormat formatter = new DecimalFormat("###########");
+            string = "" + formatter.format(Double.parseDouble(string));
+        }
+        catch (Exception e)
+        {
+            System.out.println (e.toString());
+            return string;
+        }
+
+        return string;
+    }
+
+    //this puts the date in the correct format recognized by the database
+    private String FormatDate (String date)
+    {
+        System.out.println (date);
+        return date;
     }
 
 }
