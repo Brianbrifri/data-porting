@@ -22,8 +22,7 @@ public class SQLConnect {
 
         try{
             //Register JDBC
-            Class.forName("com.mysql.jdbc.Driver");
-
+            Class.forName(JDBC_DRIVER);
 
             System.out.println("Connecting to a selected database..."); //Just for testing. Don't really "need"
             conn = DriverManager.getConnection(DB_URL, USER, PASS); //Connect
@@ -67,9 +66,10 @@ public class SQLConnect {
 
     public void insertObservationWith(String trialID, String emplID, String actorType, String anchorID, String mmntID, String textResponse, String obsDt) throws SQLException {
 
-        connect();
+        //connect();
 
-        PreparedStatement sql = conn.prepareStatement("INSERT INTO P2_EQS_OBS (TRIAL_ID, EMPLID, ACTOR_TYPE, ANCHOR_ID, MMNT_ID, TEXT_RESPONSE, OBS_DT) VALUES (?, ?, ?, ?, ?, ?, ?);");
+
+        PreparedStatement sql = conn.prepareStatement("INSERT INTO millerkei.P2_EQS_OBS (TRIAL_ID, EMPLID, ACTOR_TYPE, ANCHOR_ID, MMNT_ID, TEXT_RESPONSE, OBS_DT) VALUES (?, ?, ?, ?, ?, ?, ?);");
         sql.setString(1, trialID);
         sql.setString(2, emplID);
         sql.setString(3, actorType);
@@ -79,6 +79,6 @@ public class SQLConnect {
         sql.setString(7, obsDt);
         sql.executeQuery();
 
-        disconnect();
+        //disconnect();
     }
 }
