@@ -5,3 +5,7 @@
 *.xlsx
 .*.xlsx
 out/
+.idea/dataSources.local.xml
+.idea/dataSources/
+.idea/inspectionProfiles/
+SSOIDList.txt

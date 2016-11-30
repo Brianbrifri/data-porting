@@ -7,6 +7,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.time.Month;
 import java.util.ArrayList;
@@ -55,6 +56,7 @@ public class Parser
             for (File a : directoryStack.pop().listFiles()) {
                 //if it is not a directory then work on it and get ssoids
                 if (!a.isDirectory()) {
+                    System.out.println("Not dir");
                     if(a.getName().endsWith(".xls")) {
                         ReadInWorkbook(a);
                     }
@@ -80,7 +82,9 @@ public class Parser
         FileInputStream inputStream = null;
 
 
-        //flag to check if the program is in the data area
+        System.out.println("Read in workbook");
+        //flag to check if the program is in the data area:w
+
         boolean hasEnteredData = false;
         //the type of assesment like summative or formative
         String amountID = "";
@@ -146,7 +150,7 @@ public class Parser
 
                         //map the header to the measurement id as well
                         qualityHeaders.add(MapHeaderToMeasurementID(cell));
-                        //System.out.println(i + ": " + cell.toString() + "\n");
+                        System.out.println(i + ": " + cell.toString() + "\n");
                         i++;
                         cell = nextRow.getCell(i);
                     }
@@ -177,7 +181,7 @@ public class Parser
         Cell cell;
 
 
-        String measurement = "";
+        String measurement;
         //pair quality header with actual amounts
         for (String header : qualityHeaders)
         {
@@ -188,7 +192,7 @@ public class Parser
             if (header.contains("MECE-QI"))
             {
                 measurement = DataToAnchorID(measurement);
-                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, "4", "4", "4"), stuID, "RATER", measurement, header, null, completionDate));
+                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, "4", "4", "4"), evaluator, "RATER", measurement, header, null, completionDate));
             }
         }
     }
@@ -227,31 +231,27 @@ public class Parser
    private String MapHeaderToMeasurementID(Cell cell)
     {
         String cell_data = cell.toString().toLowerCase();
+        StringBuilder builder = new StringBuilder();
 
         //maps header to quality indicator measurement id
         if (cell_data.contains("quality indicator"))
         {
-
-            char[] digits = new char[2];
-            int index = 0;
-
             //go through character by character to find the numbers for quality indicator
             for (char c : cell_data.toCharArray())
             {
                 //if a character is a digit add it to digits for QI
                 if (c >= '0' && c <= '9')
                 {
-                    digits [index] = c;
-                    index++;
+                    builder.append(c);
                 }
             }
 
-            return "MECE-QI" + String.copyValueOf(digits);
+            return "MECE-QI" + builder;
         }
         return cell.toString();
     }
 
-    //maps the header for the completion of a evalution to a amount id
+    //maps the header for the completion of a evaluation to a amount id
     //p1 being formative and p2 being summative
     private String MapHeaderToAmountID(Cell cell)
     {
@@ -275,12 +275,23 @@ public class Parser
 
     private String GenerateSQLQuery (String obsID, String trialID, String empID, String actorType, String anchorID, String measurementID, String response, String observationDate)
     {
+        observationDate = "Timestamp " + observationDate;
+
+        SQLConnect connect = new SQLConnect();
+        try {
+            connect.insertObservationWith(trialID, empID, actorType, anchorID, measurementID, response, observationDate);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return "INSERT INTO \"COE\".\"P2_EQS_OBS\" (\"OBS_ID\", \"TRIAL_ID\", \"EMPLID\", \"ACTOR_TYPE\", \"ANCHOR_ID\", \"MMNT_ID\", \"TEXT_RESPONSE\", \"OBS_DT\")" +
-                "VALUES ('" + obsID +"', '"+ trialID + "', '"+ empID +"', '"+actorType+"', '" + anchorID +"', '"+ measurementID +"', " + response +", TIMESTAMP '" + observationDate +"');";
+                "VALUES ('" + obsID +"', '"+ trialID + "', '"+ empID +"', '"+actorType+"', '" + anchorID +"', '"+ measurementID +"', '" + response +"', '" + observationDate +"');";
     }
 
     private String RemoveScientificNotation (String string)
     {
+        if(string.length() == 7) {
+            string = "0" + string;
+        }
         try
         {
             DecimalFormat formatter = new DecimalFormat("###########");
@@ -298,6 +309,7 @@ public class Parser
     //this puts the date in the correct format recognized by the database
     private String FormatDate (String date)
     {
+        StringBuilder builder = new StringBuilder(date);
         System.out.println (date);
         String month = MonthToDigits (date.substring(3,6));
         String day = date.substring(0, 2);
@@ -305,7 +317,7 @@ public class Parser
         return year + "-" + month + "-" + day;
     }
 
-    //returns a month as digits instead of abbriviations
+    //returns a month as digits instead of abbreviations
     private String MonthToDigits (String month)
     {
         month = month.toLowerCase();
