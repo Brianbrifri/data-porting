@@ -22,11 +22,14 @@ import org.apache.poi.ss.usermodel.Workbook;
 public class Parser
 {
     final int BEGIN_DATA = 6;
+    private SQLConnect connect = new SQLConnect();
     //this holds the information about what quality level the value belongs to
     private ArrayList<String> qualityHeaders = new ArrayList<>();
 
     public void Parse(String path) throws IOException
     {
+        connect.connect();
+
         System.out.println ("Reading!");
         File f = new File (path);
 
@@ -40,6 +43,7 @@ public class Parser
                 ReadInWorkbook(f);
             }
         }
+        connect.disconnect();
     }
 
     private void TraverseDirectory(File file)
@@ -275,9 +279,8 @@ public class Parser
 
     private String GenerateSQLQuery (String obsID, String trialID, String empID, String actorType, String anchorID, String measurementID, String response, String observationDate)
     {
-        observationDate = "Timestamp " + observationDate;
 
-        SQLConnect connect = new SQLConnect();
+
         try {
             connect.insertObservationWith(trialID, empID, actorType, anchorID, measurementID, response, observationDate);
         } catch (SQLException e) {
