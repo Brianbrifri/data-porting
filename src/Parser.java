@@ -147,7 +147,7 @@ public class Parser
                 //Student in first cell means that the next row will be the data area
                 if (cell != null)
                 {
-                    if (cell.toString().toLowerCase().compareTo("evaluation") == 0)
+                    if (cell.toString().toLowerCase().contains("evaluation"))
                     {
                         cell = nextRow.cellIterator().next();
 
