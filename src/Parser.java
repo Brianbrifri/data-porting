@@ -46,6 +46,7 @@ public class Parser
         {
             System.out.println("Parsing file");
             if(f.getName().endsWith(".xls")) {
+                System.out.println("Parsing " + f.getName());
                 ReadInWorkbook(f);
             }
         }
