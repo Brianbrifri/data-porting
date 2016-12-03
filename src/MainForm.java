@@ -141,11 +141,19 @@ public class MainForm {
 			//utility.outputFilePath = "~/home/b-kizzle/";
 			//System.out.println(utility.excelFilePath);
 			try {
-			    StringBuilder usr = new StringBuilder(sqlUserTextBox.getText());
-			    StringBuilder pswd = new StringBuilder(sqlPassTextBox.getText());
-				if(!parser.Parse(dataPathTextBox.getText(), usr, pswd)) {
+				StringBuilder usr = new StringBuilder(sqlUserTextBox.getText());
+				StringBuilder pswd = new StringBuilder(sqlPassTextBox.getText());
+
+				//**Hard code in correct credentials here**
+				String correctUsr = "";
+				String correctPswd = "";
+				if(usr.toString().equals(correctUsr) && pswd.toString().equals(correctPswd)) {
+					outputTextArea.append("Credentials correct\n");
+					parser.Parse(dataPathTextBox.getText(), usr, pswd);
+				}
+				else {
 					outputTextArea.append("Please enter correct credentials\n");
-					outputTextArea.append("for the database: lacuna.dhcp.umsl.edu");
+					outputTextArea.append("for the database: lacuna.dhcp.umsl.edu\n");
 				}
 				usr.setLength(0);
 				pswd.setLength(0);
