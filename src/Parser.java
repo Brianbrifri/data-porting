@@ -69,6 +69,7 @@ public class Parser
                 if (!a.isDirectory()) {
                     System.out.println("Not dir");
                     if(a.getName().endsWith(".xls")) {
+                        System.out.println("Parsing " + a.getName());
                         ReadInWorkbook(a);
                     }
 
@@ -108,7 +109,6 @@ public class Parser
         {
             inputStream = new FileInputStream(file);
             workbook = new HSSFWorkbook(inputStream);
-            System.out.println ("Done this");
         }
         catch (IOException e)
         {
@@ -227,9 +227,10 @@ public class Parser
     //Checks if External ID is a number or not. If not,
     //looks up the string in the table SSOID_MAPPINGS
     //and returns the correct EMPLID. Returns 000000000 otherwise
-    String getStudentId(String stuID) {
+    private String getStudentId(String stuID) {
         boolean isNumber = true;
         try {
+            //noinspection ResultOfMethodCallIgnored
             Float.parseFloat(stuID);
         } catch (NumberFormatException e) {
             isNumber = false;
@@ -299,7 +300,7 @@ public class Parser
         StringBuilder builder = new StringBuilder();
 
         //maps header to quality indicator measurement id
-        if (cell_data.contains("quality indicator"))
+        if (cell_data.contains("quality indicator") && !cell_data.contains("points"))
         {
             //go through character by character to find the numbers for quality indicator
             for (char c : cell_data.toCharArray())

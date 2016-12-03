@@ -12,7 +12,7 @@ public class SQLConnect {
             String JDBC_DRIVER = "com.mysql.jdbc.Driver";
             Class.forName(JDBC_DRIVER).newInstance();
 
-            System.out.println("Connecting to a selected database..."); //Just for testing. Don't really "need"
+            System.out.println("Connecting to a millerkei DB..."); //Just for testing. Don't really "need"
             String DB_URL = "jdbc:mysql://lacuna.dhcp.umsl.edu:3306/millerkei";
             conn = DriverManager.getConnection(DB_URL, usr.toString(), pswd.toString()); //Connect
             usr.setLength(0);
