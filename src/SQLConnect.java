@@ -81,4 +81,16 @@ public class SQLConnect {
         }
         return term;
     }
+
+    public String getCourseIdFrom(String desc) throws SQLException {
+        String courseID = "108900";
+        PreparedStatement sql = conn.prepareStatement("SELECT COURSE_ID FROM COURSE_MAPPINGS WHERE COURSEDESC = ?;");
+        sql.setString(1, desc);
+        ResultSet rs = sql.executeQuery();
+        while(rs.next()) {
+            System.out.println("Got results");
+            courseID = rs.getString("COURSE_ID");
+        }
+        return courseID;
+    }
 }

@@ -147,9 +147,10 @@ public class Parser
                 //Student in first cell means that the next row will be the data area
                 if (cell != null)
                 {
+
                     if (cell.toString().toLowerCase().contains("evaluation"))
                     {
-                        cell = nextRow.cellIterator().next();
+                        cell = nextRow.getCell(1);
 
                         //try to get the amount id from the 2nd cell in teh evaluation row
                         try
@@ -161,14 +162,7 @@ public class Parser
                         }
 
                         //try to get course id from 2nd cell in evaluation row
-                        try {
-
-                            courseID = MapHeaderToCourseID(cell);
-                        } catch (NoSuchElementException e)
-                        {
-                            System.out.println("Course ID not able to be parsed!");
-                        }
-
+                        courseID = MapHeaderToCourseID(cell);
                     }
                     else if (cell.toString().toLowerCase().compareTo("student") == 0)
                     {
@@ -230,11 +224,11 @@ public class Parser
             if (header.contains("MECE-QI"))
             {
                 measurement = DataToAnchorID(measurement);
-                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, "4", "000", convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
+                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, courseID, "000", convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
             }
             if (header.contains("MOTS-QIW1")) {
                 measurement = writingQualityToId(measurement);
-                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, "4", "000", convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
+                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, courseID, "000", convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
             }
         }
     }
@@ -357,23 +351,45 @@ public class Parser
     }
 
     //gets information about string values and uses them to find the course
-    private String MapHeaderToCourseID (Cell cell) throws NoSuchElementException
+    private String MapHeaderToCourseID (Cell cell)
     {
-        String string = cell.toString().toLowerCase();
 
-        if (string.contains("health and pe"))
+        String string = cell.toString().toLowerCase();
+        String desc = "Practicum 2";
+
+        if (string.contains("health"))
         {
-            return "health and pe";
+            desc = "Health and PE";
         }
         else if (string.contains ("music"))
         {
-            return "music";
+            desc = "Music Education";
         }
-        else throw new NoSuchElementException();
+        else if (string.contains("art")) {
+            desc = "Art Education";
+        }
+        else if (string.contains("studio")) {
+            desc = "Studio Schools";
+        }
+        else if (string.contains("certification")) {
+            desc = "Teacher Certification";
+        }
+        else {
+            System.out.println("Using default Practicum 2 CourseID");
+        }
+        try {
+            desc = connect.getCourseIdFrom(desc);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return desc;
+
+        //else throw new NoSuchElementException();
     }
 
     private String GenerateAssessmentTrialID (String candidateID,String amountID, String courseID, String classSection, String term)
     {
+        System.out.println(amountID);
         return candidateID + "-" + amountID + "-" + courseID + "-" + classSection + "-" + term;
     }
 
