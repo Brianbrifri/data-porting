@@ -144,57 +144,40 @@ public class Parser
                 }
 
 
-                //gets information about amountID and courseID from the evaluation row
-                if (cell.toString().toLowerCase().compareTo("evaluation") == 0)
-                {
-                    cell = nextRow.cellIterator().next();
+                //Student in first cell means that the next row will be the data area
+                if (cell != null && cell.toString().compareTo("Student") == 0) {
+                    //make sure no old headers from other files are still around
+                    qualityHeaders.clear();
 
+                    //the qualityHeaders start at BEGIN_DATA
+                    int i = BEGIN_DATA;
+
+                    //before the quality headers is information about completed use this to get amountID
+                    amountID = MapHeaderToAmountID(nextRow.getCell(i - 1));
+
+                    //work on the same header that was used to get amount ID to get course ID
                     try
                     {
-                        //get information about amount id from the evaluation row
-                        amountID = MapHeaderToAmountID(cell);
-                    }catch (NoSuchElementException e)
-                    {
-                        System.out.println("Amount ID not able to be parsed");
-                    }
-
-
-                    try
-                    {
-                        //get information about course id from the evaluation row
-                        courseID = MapHeaderToCourseID(cell);
+                        courseID = MapHeaderToCourseID(nextRow.getCell(i - 1));
                     } catch (NoSuchElementException e)
                     {
-                        System.out.println("Course ID not able to be parsed!");
+                        System.out.println ("Course ID not able to be parsed!");
                     }
-                }
-                //Student in first cell means that the next row will be the data area
-               else if (cell != null)
-                {
-                    //get information about the types of measurements in data section
-                    if (cell.toString().toLowerCase().compareTo("student") == 0)
+
+                    System.out.println (amountID);
+                    cell = nextRow.getCell(i);
+
+                    //get and store the string headers for each of the quality levels
+                    while (cell != null && !cell.toString().isEmpty())
                     {
-                        //make sure no old headers from other files are still around
-                        qualityHeaders.clear();
 
-                        //the qualityHeaders start at BEGIN_DATA
-                        int i = BEGIN_DATA;
-
-                        System.out.println(amountID);
+                        //map the header to the measurement id as well
+                        qualityHeaders.add(MapHeaderToMeasurementID(cell));
+                        System.out.println(i + ": " + cell.toString() + "\n");
+                        i++;
                         cell = nextRow.getCell(i);
-
-                        //get and store the string headers for each of the quality levels
-                        while (cell != null && !cell.toString().isEmpty()) {
-
-                            //map the header to the measurement id as well
-                            qualityHeaders.add(MapHeaderToMeasurementID(cell));
-                            System.out.println(i + ": " + cell.toString() + "\n");
-                            i++;
-                            cell = nextRow.getCell(i);
-                        }
-                        hasEnteredData = true;
                     }
-
+                    hasEnteredData = true;
                 }
             }
             else
@@ -229,10 +212,14 @@ public class Parser
             measurement = cell.toString();
 
             //if it is a quality indicator then convert it to anchor id
-            if (header.contains("MECE-QI") || header.contains("MOTS_QIW1"))
+            if (header.contains("MECE-QI"))
             {
                 measurement = DataToAnchorID(measurement);
-                System.out.println(GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, "4", "000", convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
+                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, "4", "000", convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
+            }
+            if (header.contains("MOTS-QIW1")) {
+                measurement = writingQualityToId(measurement);
+                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, "4", "000", convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
             }
         }
     }
@@ -337,7 +324,7 @@ public class Parser
 
     //maps the header for the completion of a evaluation to a amount id
     //p1 being formative and p2 being summative
-    private String MapHeaderToAmountID(Cell cell) throws NoSuchElementException
+    private String MapHeaderToAmountID(Cell cell)
     {
         String string = cell.toString().toLowerCase();
 
@@ -349,8 +336,7 @@ public class Parser
         {
             string = "MEES-CEFO-V001";
         }
-        else
-            throw new NoSuchElementException();
+        return string;
     }
 
     //gets information about string values and uses them to find the course
