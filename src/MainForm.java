@@ -140,8 +140,23 @@ public class MainForm {
 			//utility.outputFilePath = "~/home/b-kizzle/";
 			//System.out.println(utility.excelFilePath);
 			try {
-				parser.Parse(dataPathTextBox.getText());
-//				utility.run(dataPathTextBox.getText(), "/home/b-kizzle/SSOIDList.txt");
+				String getUser = sqlUserTextBox.getText();
+				String getPass = sqlPassTextBox.getText();
+
+				//Username and Password must be correctly coded here
+				String correctUser = "";
+				String correctPass = "";
+
+				if(getUser.equals(correctUser) && getPass.equals(correctPass)) {
+					System.out.println("Credentials Correct\n");
+					parser.Parse(dataPathTextBox.getText());
+					//utility.run(dataPathTextBox.getText(), "/home/b-kizzle/SSOIDList.txt");
+				}
+				else
+				{
+					System.out.println("Wrong Password or Username");
+				}
+
 			} catch (IOException ex) {
 				ex.printStackTrace();
 			}
