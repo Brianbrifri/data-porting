@@ -145,39 +145,54 @@ public class Parser
 
 
                 //Student in first cell means that the next row will be the data area
-                if (cell != null && cell.toString().compareTo("Student") == 0) {
-                    //make sure no old headers from other files are still around
-                    qualityHeaders.clear();
-
-                    //the qualityHeaders start at BEGIN_DATA
-                    int i = BEGIN_DATA;
-
-                    //before the quality headers is information about completed use this to get amountID
-                    amountID = MapHeaderToAmountID(nextRow.getCell(i - 1));
-
-                    //work on the same header that was used to get amount ID to get course ID
-                    try
+                if (cell != null)
+                {
+                    if (cell.toString().toLowerCase().compareTo("evaluation") == 0)
                     {
-                        courseID = MapHeaderToCourseID(nextRow.getCell(i - 1));
-                    } catch (NoSuchElementException e)
-                    {
-                        System.out.println ("Course ID not able to be parsed!");
+                        cell = nextRow.cellIterator().next();
+
+                        //try to get the amount id from the 2nd cell in teh evaluation row
+                        try
+                        {
+                            amountID = MapHeaderToAmountID(cell);
+                        }catch (NoSuchElementException e)
+                        {
+                            System.out.println ("Amount ID not able to be parsed!");
+                        }
+
+                        //try to get course id from 2nd cell in evaluation row
+                        try {
+
+                            courseID = MapHeaderToCourseID(cell);
+                        } catch (NoSuchElementException e)
+                        {
+                            System.out.println("Course ID not able to be parsed!");
+                        }
+
                     }
-
-                    System.out.println (amountID);
-                    cell = nextRow.getCell(i);
-
-                    //get and store the string headers for each of the quality levels
-                    while (cell != null && !cell.toString().isEmpty())
+                    else if (cell.toString().toLowerCase().compareTo("student") == 0)
                     {
 
-                        //map the header to the measurement id as well
-                        qualityHeaders.add(MapHeaderToMeasurementID(cell));
-                        System.out.println(i + ": " + cell.toString() + "\n");
-                        i++;
+                        //make sure no old headers from other files are still around
+                        qualityHeaders.clear();
+
+                        //the qualityHeaders start at BEGIN_DATA
+                        int i = BEGIN_DATA;
+
                         cell = nextRow.getCell(i);
+
+                        //get and store the string headers for each of the quality levels
+                        while (cell != null && !cell.toString().isEmpty()) {
+
+                            //map the header to the measurement id as well
+                            qualityHeaders.add(MapHeaderToMeasurementID(cell));
+                            System.out.println(i + ": " + cell.toString() + "\n");
+                            i++;
+                            cell = nextRow.getCell(i);
+                        }
+                        hasEnteredData = true;
+
                     }
-                    hasEnteredData = true;
                 }
             }
             else
@@ -324,19 +339,21 @@ public class Parser
 
     //maps the header for the completion of a evaluation to a amount id
     //p1 being formative and p2 being summative
-    private String MapHeaderToAmountID(Cell cell)
+    private String MapHeaderToAmountID(Cell cell) throws NoSuchElementException
     {
         String string = cell.toString().toLowerCase();
 
         if (string.contains("p2") || string.contains("practicum 2"))
         {
             string = "MEES-CESU-V001";
+            return string;
         }
         else if (string.contains("p1"))
         {
             string = "MEES-CEFO-V001";
+            return string;
         }
-        return string;
+        else throw new NoSuchElementException();
     }
 
     //gets information about string values and uses them to find the course
@@ -352,8 +369,7 @@ public class Parser
         {
             return "music";
         }
-        else
-            throw new NoSuchElementException();
+        else throw new NoSuchElementException();
     }
 
     private String GenerateAssessmentTrialID (String candidateID,String amountID, String courseID, String classSection, String term)
