@@ -12,6 +12,7 @@ import java.text.DecimalFormat;
 import java.time.Month;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Stack;
 
 import org.apache.poi.ss.usermodel.Cell;
@@ -99,6 +100,9 @@ public class Parser
         //the type of assesment like summative or formative
         String amountID = "";
 
+        //the  id of the current course being parsed
+        String courseID = "";
+
 
         try
         {
@@ -151,6 +155,10 @@ public class Parser
 
                     //before the quality headers is information about completed use this to get amountID
                     amountID = MapHeaderToAmountID(nextRow.getCell(i - 1));
+
+                    //work on the same hader that was used to get amount ID to get course ID
+                    courseID = MapHeaderToCourseID(nextRow.getCell (i - 1));
+
                     System.out.println (amountID);
                     cell = nextRow.getCell(i);
 
@@ -171,7 +179,7 @@ public class Parser
             {
                 if(nextRow.cellIterator().hasNext())
                 {
-                    RowToDatabase(nextRow.cellIterator(), amountID);
+                    RowToDatabase(nextRow.cellIterator(), amountID, courseID);
                 }
 
             }
@@ -179,7 +187,7 @@ public class Parser
 
     }
 
-    private void RowToDatabase (Iterator<Cell> iterator, String amountID)
+    private void RowToDatabase (Iterator<Cell> iterator, String amountID, String courseID)
     {
         String student = iterator.next().toString();
         String stuID = RemoveScientificNotation(getStudentId(iterator.next().toString()));
@@ -325,6 +333,23 @@ public class Parser
         return string;
     }
 
+    //gets information about string values and uses them to find the course
+    private String MapHeaderToCourseID (Cell cell) throws NoSuchElementException
+    {
+        String string = cell.toString().toLowerCase();
+
+        if (string.contains("health and pe"))
+        {
+            return "health and pe";
+        }
+        else if (string.contains ("music"))
+        {
+            return "music";
+        }
+        else
+            throw new NoSuchElementException();
+    }
+
     private String GenerateAssessmentTrialID (String candidateID,String amountID, String courseID, String classSection, String term)
     {
         return candidateID + "-" + amountID + "-" + courseID + "-" + classSection + "-" + term;
@@ -406,7 +431,8 @@ public class Parser
         return month;
     }
 
-    private String convertCompletionDateToTerm(String date) {
+    private String convertCompletionDateToTerm(String date)
+    {
         String term = "0000";
         try {
             term = connect.getTermFrom(date);
