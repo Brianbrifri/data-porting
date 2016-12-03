@@ -145,8 +145,7 @@ public class Parser
 
 
                 //Student in first cell means that the next row will be the data area
-                if (cell != null && cell.toString().compareTo("Student") == 0)
-                {
+                if (cell != null && cell.toString().compareTo("Student") == 0) {
                     //make sure no old headers from other files are still around
                     qualityHeaders.clear();
 
@@ -156,8 +155,14 @@ public class Parser
                     //before the quality headers is information about completed use this to get amountID
                     amountID = MapHeaderToAmountID(nextRow.getCell(i - 1));
 
-                    //work on the same hader that was used to get amount ID to get course ID
-                    courseID = MapHeaderToCourseID(nextRow.getCell (i - 1));
+                    //work on the same header that was used to get amount ID to get course ID
+                    try
+                    {
+                        courseID = MapHeaderToCourseID(nextRow.getCell(i - 1));
+                    } catch (NoSuchElementException e)
+                    {
+                        System.out.println ("Course ID not able to be parsed!");
+                    }
 
                     System.out.println (amountID);
                     cell = nextRow.getCell(i);
