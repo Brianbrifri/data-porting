@@ -26,10 +26,15 @@ public class Parser
     //this holds the information about what quality level the value belongs to
     private ArrayList<String> qualityHeaders = new ArrayList<>();
 
-    public void Parse(String path) throws IOException
+    public boolean Parse(String path, StringBuilder usr, StringBuilder pswd) throws IOException
     {
-        connect.connect();
-
+        if(!connect.connect(usr, pswd)) {
+            usr.setLength(0);
+            pswd.setLength(0);
+            return false;
+        }
+        usr.setLength(0);
+        pswd.setLength(0);
         System.out.println ("Reading!");
         File f = new File (path);
 
@@ -44,6 +49,7 @@ public class Parser
             }
         }
         connect.disconnect();
+        return true;
     }
 
     private void TraverseDirectory(File file)

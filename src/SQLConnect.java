@@ -4,7 +4,7 @@ public class SQLConnect {
 
     private Connection conn;
 
-    public void connect()
+    public boolean connect(StringBuilder usr, StringBuilder pswd)
     {
 
         try{
@@ -14,13 +14,16 @@ public class SQLConnect {
 
             System.out.println("Connecting to a selected database..."); //Just for testing. Don't really "need"
             String DB_URL = "jdbc:mysql://lacuna.dhcp.umsl.edu:3306/millerkei";
-            String USER = "umsl_cs_team";
-            String PASS = "!kmcR0ck5";
-            conn = DriverManager.getConnection(DB_URL, USER, PASS); //Connect
+            conn = DriverManager.getConnection(DB_URL, usr.toString(), pswd.toString()); //Connect
+            usr.setLength(0);
+            pswd.setLength(0);
+            return true;
 
         } catch(Exception e) {
             e.printStackTrace();
+            return false;
         }
+
 
     }//end main
 

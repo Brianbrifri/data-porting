@@ -16,6 +16,7 @@ public class MainForm {
 	private JLabel lblUser;
 	private JLabel lblPass;
 	private JTextField sqlPassTextBox;
+	private JTextArea outputTextArea;
 	private final Action action = new SwingAction();
 	private JButton btnConvert;
 	private final Action action_1 = new SwingAction_1();
@@ -87,7 +88,7 @@ public class MainForm {
 		sqlPanel.add(lblPass);
 		lblPass.setFont(new Font("Tahoma", Font.BOLD, 11));
 
-		sqlPassTextBox = new JTextField();
+		sqlPassTextBox = new JPasswordField();
 		sqlPassTextBox.setBounds(182, 43, 86, 20);
 		sqlPanel.add(sqlPassTextBox);
 		sqlPassTextBox.setColumns(10);
@@ -96,7 +97,7 @@ public class MainForm {
 		outputScrollPane.setBounds(10, 129, 284, 113);
 		frmDataPorting.getContentPane().add(outputScrollPane);
 		
-		JTextArea outputTextArea = new JTextArea();
+		outputTextArea = new JTextArea();
 		outputScrollPane.setViewportView(outputTextArea);
 		outputTextArea.setText("");
 		outputTextArea.setEditable(false);
@@ -140,7 +141,14 @@ public class MainForm {
 			//utility.outputFilePath = "~/home/b-kizzle/";
 			//System.out.println(utility.excelFilePath);
 			try {
-				parser.Parse(dataPathTextBox.getText());
+			    StringBuilder usr = new StringBuilder(sqlUserTextBox.getText());
+			    StringBuilder pswd = new StringBuilder(sqlPassTextBox.getText());
+				if(!parser.Parse(dataPathTextBox.getText(), usr, pswd)) {
+					outputTextArea.append("Please enter correct credentials\n");
+					outputTextArea.append("for the database: lacuna.dhcp.umsl.edu");
+				}
+				usr.setLength(0);
+				pswd.setLength(0);
 //				utility.run(dataPathTextBox.getText(), "/home/b-kizzle/SSOIDList.txt");
 			} catch (IOException ex) {
 				ex.printStackTrace();
