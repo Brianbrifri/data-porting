@@ -47,7 +47,7 @@ public class SQLConnect {
     }
 
     public String getEmplidMappingFrom(String ssoid) throws SQLException {
-        String emplid = null;
+        String emplid = "00000000";
         PreparedStatement sql = conn.prepareStatement("SELECT EMPLID FROM SSOID_MAPPINGS WHERE SSO_ID = ?;");
         sql.setString(1, ssoid);
         ResultSet rs = sql.executeQuery();
@@ -55,5 +55,27 @@ public class SQLConnect {
             emplid = rs.getString("EMPLID");
         }
         return emplid;
+    }
+
+    public String getWritingQualityFrom(String level) throws SQLException {
+        String mmnt = null;
+        PreparedStatement sql = conn.prepareStatement("SELECT ANCHOR_ID FROM P2_WRITING_ANCHORS WHERE ANCHOR_TEXT LIKE ?;");
+        sql.setString(1, level);
+        ResultSet rs = sql.executeQuery();
+        while(rs.next()) {
+            mmnt = rs.getString("ANCHOR_ID");
+        }
+        return mmnt;
+    }
+
+    public String getTermFrom(String date) throws SQLException {
+        String term = "0000";
+        PreparedStatement sql = conn.prepareStatement("SELECT STRM FROM TERMS WHERE ? BETWEEN TERM_BEGIN_DT AND TERM_END_DT;");
+        sql.setString(1, date);
+        ResultSet rs = sql.executeQuery();
+        while(rs.next()) {
+            term = rs.getString("STRM");
+        }
+        return term;
     }
 }

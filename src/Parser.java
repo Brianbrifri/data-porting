@@ -21,7 +21,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 
 public class Parser
 {
-    final int BEGIN_DATA = 6;
+    private int BEGIN_DATA = 6;
     private SQLConnect connect = new SQLConnect();
     //this holds the information about what quality level the value belongs to
     private ArrayList<String> qualityHeaders = new ArrayList<>();
@@ -196,11 +196,18 @@ public class Parser
             if (header.contains("MECE-QI"))
             {
                 measurement = DataToAnchorID(measurement);
-                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, "4", "000", "4"), evaluator, "RATER", measurement, header, null, completionDate));
+                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, "4", "000", convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
+            }
+            if (header.contains("MOTS-QIW1")) {
+                measurement = writingQualityToId(measurement);
+                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, "4", "000", convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
             }
         }
     }
 
+    //Checks if External ID is a number or not. If not,
+    //looks up the string in the table SSOID_MAPPINGS
+    //and returns the correct EMPLID. Returns 000000000 otherwise
     String getStudentId(String stuID) {
         boolean isNumber = true;
         try {
@@ -242,12 +249,28 @@ public class Parser
         {
             return "MOTS-CLEV-DEVE";
         }
+        else if (data.contains("revision")) {
+            return "MOTS-CLEV-NA";
+        }
         else
         {
             //return N/A for any other value
             //this may not be the correct approach
             return "MOTS-CLEV-NA";
         }
+    }
+
+    //Calls the SQLConnect function to look up matching
+    //ANCHOR_ID to the measurement
+    private String writingQualityToId(String data) {
+        data = data.toLowerCase();
+        String anchorID = null;
+        try {
+            anchorID = connect.getWritingQualityFrom(data);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return anchorID;
     }
 
     //maps the header to a measurement id in the database
@@ -271,7 +294,12 @@ public class Parser
 
             return "MECE-QI" + builder;
         }
-        return cell.toString();
+        else if (cell_data.contains("writing quality")) {
+            return "MOTS-QIW1";
+        }
+        else {
+            return cell.toString();
+        }
     }
 
     //maps the header for the completion of a evaluation to a amount id
@@ -305,8 +333,8 @@ public class Parser
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return "INSERT INTO \"COE\".\"P2_EQS_OBS\" (\"OBS_ID\", \"TRIAL_ID\", \"EMPLID\", \"ACTOR_TYPE\", \"ANCHOR_ID\", \"MMNT_ID\", \"TEXT_RESPONSE\", \"OBS_DT\")" +
-                "VALUES ('" + obsID +"', '"+ trialID + "', '"+ empID +"', '"+actorType+"', '" + anchorID +"', '"+ measurementID +"', '" + response +"', '" + observationDate +"');";
+        return "INSERT INTO P2_EQS_OBS (\"TRIAL_ID\", \"EMPLID\", \"ACTOR_TYPE\", \"ANCHOR_ID\", \"MMNT_ID\", \"TEXT_RESPONSE\", \"OBS_DT\")" +
+                "VALUES ('"+ trialID + "', '"+ empID +"', '"+actorType+"', '" + anchorID +"', '"+ measurementID +"', '" + response +"', '" + observationDate +"');";
     }
 
     private String RemoveScientificNotation (String string)
@@ -370,6 +398,16 @@ public class Parser
             return "12";
 
         return month;
+    }
+
+    private String convertCompletionDateToTerm(String date) {
+        String term = "0000";
+        try {
+            term = connect.getTermFrom(date);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return term;
     }
 
 }
