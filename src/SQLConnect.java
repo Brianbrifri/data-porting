@@ -45,4 +45,15 @@ public class SQLConnect {
         sql.executeUpdate();
 
     }
+
+    public String getEmplidMappingFrom(String ssoid) throws SQLException {
+        String emplid = null;
+        PreparedStatement sql = conn.prepareStatement("SELECT EMPLID FROM SSOID_MAPPINGS WHERE SSO_ID = ?;");
+        sql.setString(1, ssoid);
+        ResultSet rs = sql.executeQuery();
+        while(rs.next()) {
+            emplid = rs.getString("EMPLID");
+        }
+        return emplid;
+    }
 }

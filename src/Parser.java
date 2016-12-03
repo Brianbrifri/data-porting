@@ -176,7 +176,7 @@ public class Parser
     private void RowToDatabase (Iterator<Cell> iterator, String amountID)
     {
         String student = iterator.next().toString();
-        String stuID = RemoveScientificNotation(iterator.next().toString());
+        String stuID = RemoveScientificNotation(getStudentId(iterator.next().toString()));
         String evaluator = iterator.next().toString();
         String completionDate = FormatDate(iterator.next().toString());
         String isPublished = iterator.next().toString();
@@ -196,11 +196,30 @@ public class Parser
             if (header.contains("MECE-QI"))
             {
                 measurement = DataToAnchorID(measurement);
-                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, "4", "4", "4"), evaluator, "RATER", measurement, header, null, completionDate));
+                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, "4", "000", "4"), evaluator, "RATER", measurement, header, null, completionDate));
             }
         }
     }
 
+    String getStudentId(String stuID) {
+        boolean isNumber = true;
+        try {
+            Float.parseFloat(stuID);
+        } catch (NumberFormatException e) {
+            isNumber = false;
+        }
+        if(isNumber) {
+            return stuID;
+        }
+        else {
+            try {
+                return connect.getEmplidMappingFrom(stuID);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return "00000000";
+    }
     //takes in a cell and transforms the data into an Anchor ID
     //throws NoSuchElementException if no element is found
    private String DataToAnchorID(String data)
@@ -292,9 +311,6 @@ public class Parser
 
     private String RemoveScientificNotation (String string)
     {
-        if(string.length() == 7) {
-            string = "0" + string;
-        }
         try
         {
             DecimalFormat formatter = new DecimalFormat("###########");
@@ -306,6 +322,9 @@ public class Parser
             return string;
         }
 
+        if(string.length() == 7) {
+            string = "0" + string;
+        }
         return string;
     }
 
