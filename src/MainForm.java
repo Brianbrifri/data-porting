@@ -16,6 +16,7 @@ public class MainForm {
 	private JLabel lblUser;
 	private JLabel lblPass;
 	private JTextField sqlPassTextBox;
+	private JTextArea outputTextArea;
 	private final Action action = new SwingAction();
 	private JButton btnConvert;
 	private final Action action_1 = new SwingAction_1();
@@ -87,7 +88,7 @@ public class MainForm {
 		sqlPanel.add(lblPass);
 		lblPass.setFont(new Font("Tahoma", Font.BOLD, 11));
 
-		sqlPassTextBox = new JTextField();
+		sqlPassTextBox = new JPasswordField();
 		sqlPassTextBox.setBounds(182, 43, 86, 20);
 		sqlPanel.add(sqlPassTextBox);
 		sqlPassTextBox.setColumns(10);
@@ -96,7 +97,7 @@ public class MainForm {
 		outputScrollPane.setBounds(10, 129, 284, 113);
 		frmDataPorting.getContentPane().add(outputScrollPane);
 		
-		JTextArea outputTextArea = new JTextArea();
+		outputTextArea = new JTextArea();
 		outputScrollPane.setViewportView(outputTextArea);
 		outputTextArea.setText("");
 		outputTextArea.setEditable(false);
@@ -140,23 +141,15 @@ public class MainForm {
 			//utility.outputFilePath = "~/home/b-kizzle/";
 			//System.out.println(utility.excelFilePath);
 			try {
-				String getUser = sqlUserTextBox.getText();
-				String getPass = sqlPassTextBox.getText();
-
-				//Username and Password must be correctly coded here
-				String correctUser = "";
-				String correctPass = "";
-
-				if(getUser.equals(correctUser) && getPass.equals(correctPass)) {
-					System.out.println("Credentials Correct\n");
-					parser.Parse(dataPathTextBox.getText());
-					//utility.run(dataPathTextBox.getText(), "/home/b-kizzle/SSOIDList.txt");
+			    StringBuilder usr = new StringBuilder(sqlUserTextBox.getText());
+			    StringBuilder pswd = new StringBuilder(sqlPassTextBox.getText());
+				if(!parser.Parse(dataPathTextBox.getText(), usr, pswd)) {
+					outputTextArea.append("Please enter correct credentials\n");
+					outputTextArea.append("for the database: lacuna.dhcp.umsl.edu");
 				}
-				else
-				{
-					System.out.println("Wrong Password or Username");
-				}
-
+				usr.setLength(0);
+				pswd.setLength(0);
+//				utility.run(dataPathTextBox.getText(), "/home/b-kizzle/SSOIDList.txt");
 			} catch (IOException ex) {
 				ex.printStackTrace();
 			}
