@@ -1,0 +1,16 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="data-porting:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/data_porting_jar</output-path>
+    <root id="archive" name="data-porting.jar">
+      <element id="module-output" name="data-porting" />
+      <element id="extracted-dir" path="$USER_HOME$/Downloads/poi-3.15/poi-3.15.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Downloads/poi-3.15/poi-ooxml-3.15.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Downloads/poi-3.15/poi-examples-3.15.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Downloads/poi-3.15/poi-excelant-3.15.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Downloads/poi-3.15/poi-scratchpad-3.15.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Downloads/poi-3.15/poi-ooxml-schemas-3.15.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Downloads/mysql-connector-java-5.1.40/mysql-connector-java-5.1.40/mysql-connector-java-5.1.40-bin.jar" path-in-jar="/" />
+      <element id="library" level="module" name="src" module-name="data-porting" />
+    </root>
+  </artifact>
+</component>
