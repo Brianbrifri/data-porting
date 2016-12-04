@@ -202,8 +202,10 @@ public class Parser
 
     }
 
+    //This is called for all the rows that are not headers
     private void RowToDatabase (Iterator<Cell> iterator, String amountID, String courseID)
     {
+        //Get the following variables from the row
         String student = iterator.next().toString();
         String stuID = RemoveScientificNotation(getStudentId(iterator.next().toString()));
         String evaluator = iterator.next().toString();
@@ -216,6 +218,8 @@ public class Parser
 
         String measurement;
         //pair quality header with actual amounts
+        //For each header in the array, will be checking to see if they match what we want
+        //then if they do, we will get the date from that cell beneath it
         for (String header : qualityHeaders)
         {
             cell = iterator.next();
@@ -227,10 +231,12 @@ public class Parser
                 measurement = DataToAnchorID(measurement);
                 System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, courseID, "000", convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
             }
+            //If it is writing quality header
             if (header.contains("MOTS-QIW1")) {
                 measurement = writingQualityToId(measurement);
                 System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, courseID, "000", convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
             }
+            //No data whose header doesn't match these formats will be accepted
         }
     }
 
@@ -239,27 +245,44 @@ public class Parser
     //and returns the correct EMPLID. Returns 000000000 otherwise
     private String getStudentId(String stuID) {
         boolean isNumber = true;
+        String lookupResult = "";
+        //Is the string passed in parsable as a number?
         try {
             //noinspection ResultOfMethodCallIgnored
             Float.parseFloat(stuID);
         } catch (NumberFormatException e) {
+            //Nope. Try to look up what it is
             isNumber = false;
         }
+        //Yup. Return it
         if(isNumber) {
             return stuID;
         }
         else {
             try {
-                return connect.getEmplidMappingFrom(stuID);
+                //Call the function in SQLConnect to look up the non-number string
+                lookupResult = connect.getEmplidMappingFrom(stuID);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
-        return "00000000";
+        //if we got 00000000 back from the DB, that means
+        //there was not match to the non-digit stuID that was looked up
+        //therefore, return the original string so that can be used as a possible
+        //error string for the error.sql file
+        if(lookupResult.equals("00000000")) {
+            return stuID;
+        }
+        //Got a good result from DB lookup. Return it
+        else {
+            return lookupResult;
+        }
+
     }
     //takes in a cell and transforms the data into an Anchor ID
     //throws NoSuchElementException if no element is found
-   private String DataToAnchorID(String data)
+    //This could possibly be migrated to a DB lookup
+    private String DataToAnchorID(String data)
     {
         data = data.toLowerCase();
 
@@ -294,7 +317,7 @@ public class Parser
     //ANCHOR_ID to the measurement
     private String writingQualityToId(String data) {
         data = data.toLowerCase();
-        String anchorID = null;
+        String anchorID = "0000";
         try {
             anchorID = connect.getWritingQualityFrom(data);
         } catch (SQLException e) {
@@ -303,13 +326,13 @@ public class Parser
         return anchorID;
     }
 
-    //maps the header to a measurement id in the database
-   private String MapHeaderToMeasurementID(Cell cell)
+    //Creates measurement ID from the quality indicator header
+    private String MapHeaderToMeasurementID(Cell cell)
     {
         String cell_data = cell.toString().toLowerCase();
         StringBuilder builder = new StringBuilder();
 
-        //maps header to quality indicator measurement id
+        //If the head specifies 'Quality Indicator' and NOT 'Points', proceed
         if (cell_data.contains("quality indicator") && !cell_data.contains("points"))
         {
             //go through character by character to find the numbers for quality indicator
@@ -324,9 +347,13 @@ public class Parser
 
             return "MECE-QI" + builder;
         }
+        //If it is a writing quality header, just return the measurement ID
         else if (cell_data.contains("writing quality")) {
             return "MOTS-QIW1";
         }
+        //If none of the above, leave it as is (well, lower cased though)
+        //This way when the header is looped through later, only the data with correct
+        //header types will be accessed
         else {
             return cell.toString();
         }
@@ -352,6 +379,8 @@ public class Parser
     }
 
     //gets information about string values and uses them to find the course
+    //that are stored in the database. This can be modified to include other
+    //classes
     private String MapHeaderToCourseID (Cell cell)
     {
 
@@ -388,12 +417,15 @@ public class Parser
         //else throw new NoSuchElementException();
     }
 
+    //Generates trial ID from candidate id (i.e. emplid), what type of assessment (i.e. summative, formative), course ID, classSection
+    //(which is always 000), and term
     private String GenerateAssessmentTrialID (String candidateID,String amountID, String courseID, String classSection, String term)
     {
         System.out.println(amountID);
         return candidateID + "-" + amountID + "-" + courseID + "-" + classSection + "-" + term;
     }
 
+    //Generates and calls insert function
     private String GenerateSQLQuery (String obsID, String trialID, String empID, String actorType, String anchorID, String measurementID, String response, String observationDate)
     {
 
@@ -407,6 +439,8 @@ public class Parser
                 "VALUES ('"+ trialID + "', '"+ empID +"', '"+actorType+"', '" + anchorID +"', '"+ measurementID +"', '" + response +"', '" + observationDate +"');";
     }
 
+    //apache poi returns big numbers in scientific notation. This gets rid of it
+    //Also prepends a 0 if the length is 7
     private String RemoveScientificNotation (String string)
     {
         try
@@ -438,6 +472,8 @@ public class Parser
     }
 
     //returns a month as digits instead of abbreviations
+    //because when parsing the cell with a date, it returns the
+    //format of 12-Apr-2016 etc
     private String MonthToDigits (String month)
     {
         month = month.toLowerCase();
@@ -470,6 +506,8 @@ public class Parser
         return month;
     }
 
+    //Takes in the date, calls the SQLConnect function to get the matching term
+    //Returns 0000 if an error
     private String convertCompletionDateToTerm(String date)
     {
         String term = "0000";
