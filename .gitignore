@@ -9,3 +9,5 @@ out/
 .idea/dataSources/
 .idea/inspectionProfiles/
 SSOIDList.txt
+.idea/dictionaries/
+error.sql

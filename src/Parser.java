@@ -4,16 +4,15 @@
 
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+
+import java.io.*;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
-import java.time.Month;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Stack;
+import java.util.regex.Pattern;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -22,10 +21,17 @@ import org.apache.poi.ss.usermodel.Workbook;
 
 public class Parser
 {
-    private int BEGIN_DATA = 6;
-    private SQLConnect connect = new SQLConnect();
+    private int BEGIN_DATA = 5;
+    private SQLConnect connect;
     //this holds the information about what quality level the value belongs to
-    private ArrayList<String> qualityHeaders = new ArrayList<>();
+    private ArrayList<String> qualityHeaders;
+    private BufferedWriter writer;
+
+    public Parser() throws IOException {
+        connect = new SQLConnect();
+        qualityHeaders = new ArrayList<>();
+
+    }
 
     public boolean Parse(String path, StringBuilder usr, StringBuilder pswd) throws IOException
     {
@@ -34,6 +40,7 @@ public class Parser
             pswd.setLength(0);
             return false;
         }
+        writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(System.getProperty("user.dir") + "/error.sql")));
         usr.setLength(0);
         pswd.setLength(0);
         System.out.println ("Reading!");
@@ -44,13 +51,13 @@ public class Parser
             TraverseDirectory (f);
         else
         {
-            System.out.println("Parsing file");
             if(f.getName().endsWith(".xls")) {
-                System.out.println("Parsing " + f.getName());
+                System.out.println("Parsing file " + f.getName());
                 ReadInWorkbook(f);
             }
         }
         connect.disconnect();
+        writer.close();
         return true;
     }
 
@@ -151,8 +158,13 @@ public class Parser
 
                     if (cell.toString().toLowerCase().contains("evaluation"))
                     {
+                        //Get the next cell over for the data to parse
                         cell = nextRow.getCell(1);
-
+                        //If the next cell is empty or null, get the cell after that
+                        if(cell.toString().equals("") || cell.toString() == null) {
+                            cell = nextRow.getCell(2);
+                        }
+                        System.out.println("Evaluating: " + cell.toString());
                         //try to get the amount id from the 2nd cell in teh evaluation row
                         try
                         {
@@ -164,6 +176,7 @@ public class Parser
 
                         //try to get course id from 2nd cell in evaluation row
                         courseID = MapHeaderToCourseID(cell);
+                        System.out.println("CourseID is " + courseID);
                     }
                     else if (cell.toString().toLowerCase().compareTo("student") == 0)
                     {
@@ -211,7 +224,6 @@ public class Parser
         String evaluator = iterator.next().toString();
         String completionDate = FormatDate(iterator.next().toString());
         String isPublished = iterator.next().toString();
-        String completionStatus = iterator.next().toString();
 
         Cell cell;
 
@@ -225,19 +237,40 @@ public class Parser
             cell = iterator.next();
             measurement = cell.toString();
 
-            //if it is a quality indicator then convert it to anchor id
-            if (header.contains("MECE-QI"))
-            {
-                measurement = DataToAnchorID(measurement);
-                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, courseID, "000", convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
-            }
-            //If it is writing quality header
-            if (header.contains("MOTS-QIW1")) {
-                measurement = writingQualityToId(measurement);
-                System.out.println (GenerateSQLQuery("observationID", GenerateAssessmentTrialID(stuID, amountID, courseID, "000", convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
+            if(header.contains("MECE-QI") || header.contains("MOTS-QIW1")) {
+                if(header.contains("MECE-QI")) {
+                    measurement = DataToAnchorID(measurement);
+                }
+                else {
+                    measurement = writingQualityToId(measurement);
+                }
+                if(isValidStuId(stuID)) {
+                    try {
+                        connect.insertObservationWith(GenerateAssessmentTrialID(stuID, amountID, courseID, convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+                else {
+                    //If not a valid student ID, replace it with the student name and write
+                    //the error sql query to file so it can be fixed and then ran later to be
+                    //inserted into the P2_EQS_OBS table
+                    System.out.println(stuID + " not a valid stuID. Generating ErrorSQLQuery");
+                    try {
+                        writer.write(GenerateErrorSQLQuery(GenerateAssessmentTrialID(student, amountID, courseID, convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
+                        writer.newLine();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
             //No data whose header doesn't match these formats will be accepted
         }
+    }
+
+    //After everything, make sure we have a valid stuID. 8 digits exactly.
+    private boolean isValidStuId(String stuID) {
+        return Pattern.matches("[0-9]+", stuID) && stuID.length() == 8;
     }
 
     //Checks if External ID is a number or not. If not,
@@ -270,7 +303,7 @@ public class Parser
         //there was not match to the non-digit stuID that was looked up
         //therefore, return the original string so that can be used as a possible
         //error string for the error.sql file
-        if(lookupResult.equals("00000000")) {
+        if(lookupResult.equals("")) {
             return stuID;
         }
         //Got a good result from DB lookup. Return it
@@ -286,27 +319,21 @@ public class Parser
     {
         data = data.toLowerCase();
 
-        if (data.contains("emerging"))
-        {
-            return "MOTS-CLEV-EME1";
-        } else if (data.contains("n/a"))
-        {
+        if (data.contains("emerging")) {
+            return "MOTS-CLEV-EME2";
+        } else if (data.contains("n/a")) {
             return "MOTS-CLEV-NA";
-        } else if (data.contains("candidate"))
-        {
+        } else if (data.contains("candidate")) {
             return "MOTS-CLEV-CAND";
-        } else if (data.contains("below"))
-        {
+        } else if (data.contains("below")) {
             return "MOTS-CLEV-BELO";
-        } else if (data.contains("developing"))
-        {
+        } else if (data.contains("developing")) {
             return "MOTS-CLEV-DEVE";
-        }
-        else if (data.contains("revision")) {
+        } else if (data.contains("revision")) {
             return "MOTS-CLEV-NA";
-        }
-        else
-        {
+        } else if (data.contains("new"))  {
+            return "MOTS-CLEV-EME1";
+        } else {
             //return N/A for any other value
             //this may not be the correct approach
             return "MOTS-CLEV-NA";
@@ -368,11 +395,13 @@ public class Parser
         if (string.contains("p2") || string.contains("practicum 2"))
         {
             string = "MEES-CESU-V001";
+            System.out.println("Format is " + string);
             return string;
         }
         else if (string.contains("p1"))
         {
             string = "MEES-CEFO-V001";
+            System.out.println("Format is " + string);
             return string;
         }
         else throw new NoSuchElementException();
@@ -419,24 +448,17 @@ public class Parser
 
     //Generates trial ID from candidate id (i.e. emplid), what type of assessment (i.e. summative, formative), course ID, classSection
     //(which is always 000), and term
-    private String GenerateAssessmentTrialID (String candidateID,String amountID, String courseID, String classSection, String term)
+    private String GenerateAssessmentTrialID(String candidateID, String amountID, String courseID, String term)
     {
-        System.out.println(amountID);
-        return candidateID + "-" + amountID + "-" + courseID + "-" + classSection + "-" + term;
+        return candidateID + "-" + amountID + "-" + courseID + "-" + "000" + "-" + term;
     }
 
     //Generates and calls insert function
-    private String GenerateSQLQuery (String obsID, String trialID, String empID, String actorType, String anchorID, String measurementID, String response, String observationDate)
+    private String GenerateErrorSQLQuery(String trialID, String empID, String actorType, String anchorID, String measurementID, String response, String observationDate)
     {
 
-
-        try {
-            connect.insertObservationWith(trialID, empID, actorType, anchorID, measurementID, response, observationDate);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return "INSERT INTO P2_EQS_OBS (\"TRIAL_ID\", \"EMPLID\", \"ACTOR_TYPE\", \"ANCHOR_ID\", \"MMNT_ID\", \"TEXT_RESPONSE\", \"OBS_DT\")" +
-                "VALUES ('"+ trialID + "', '"+ empID +"', '"+actorType+"', '" + anchorID +"', '"+ measurementID +"', '" + response +"', '" + observationDate +"');";
+        return "INSERT INTO millerkei.P2_EQS_OBS (TRIAL_ID, EMPLID, ACTOR_TYPE, ANCHOR_ID, MMNT_ID, TEXT_RESPONSE, OBS_DT)" +
+                " VALUES ('"+ trialID + "', '"+ empID +"', '"+actorType+"', '" + anchorID +"', '"+ measurementID +"', '" + response +"', '" + observationDate +"');";
     }
 
     //apache poi returns big numbers in scientific notation. This gets rid of it
@@ -463,8 +485,6 @@ public class Parser
     //this puts the date in the correct format recognized by the database
     private String FormatDate (String date)
     {
-        StringBuilder builder = new StringBuilder(date);
-        System.out.println (date);
         String month = MonthToDigits (date.substring(3,6));
         String day = date.substring(0, 2);
         String year = date.substring(7, 11);

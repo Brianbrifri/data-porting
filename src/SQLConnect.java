@@ -50,7 +50,7 @@ public class SQLConnect {
     }
 
     public String getEmplidMappingFrom(String ssoid) throws SQLException {
-        String emplid = "00000000";
+        String emplid = "";
         PreparedStatement sql = conn.prepareStatement("SELECT EMPLID FROM SSOID_MAPPINGS WHERE SSO_ID = ?;");
         sql.setString(1, ssoid);
         ResultSet rs = sql.executeQuery();

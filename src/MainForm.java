@@ -38,7 +38,7 @@ public class MainForm {
 	/**
 	 * Create the application.
 	 */
-	private MainForm() {
+	private MainForm() throws IOException {
 		initialize();
 	}
 
@@ -145,8 +145,8 @@ public class MainForm {
 				StringBuilder pswd = new StringBuilder(sqlPassTextBox.getText());
 
 				//**Hard code in correct credentials here**
-				String correctUsr = "";
-				String correctPswd = "";
+				String correctUsr = "umsl_cs_team";
+				String correctPswd = "!kmcR0ck5";
 				if(usr.toString().equals(correctUsr) && pswd.toString().equals(correctPswd)) {
 					outputTextArea.append("Credentials correct\n");
 					parser.Parse(dataPathTextBox.getText(), usr, pswd);
