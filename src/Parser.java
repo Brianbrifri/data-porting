@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Stack;
 import java.util.regex.Pattern;
+import javax.swing.*;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -26,6 +27,7 @@ public class Parser
     //this holds the information about what quality level the value belongs to
     private ArrayList<String> qualityHeaders;
     private BufferedWriter writer;
+    private JTextArea outputText;
 
     public Parser() throws IOException {
         connect = new SQLConnect();
@@ -33,8 +35,10 @@ public class Parser
 
     }
 
-    public boolean Parse(String path, StringBuilder usr, StringBuilder pswd) throws IOException
+    public boolean Parse(String path, StringBuilder usr, StringBuilder pswd, JTextArea text) throws IOException
     {
+        outputText = text;
+
         if(!connect.connect(usr, pswd)) {
             usr.setLength(0);
             pswd.setLength(0);
@@ -43,7 +47,7 @@ public class Parser
         writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(System.getProperty("user.dir") + "/error.sql")));
         usr.setLength(0);
         pswd.setLength(0);
-        System.out.println ("Reading!");
+        SendToGUI("Reading!");
         File f = new File (path);
 
         //if it is a directory traverse it else just read in the workbook directly
@@ -52,12 +56,13 @@ public class Parser
         else
         {
             if(f.getName().endsWith(".xls")) {
-                System.out.println("Parsing file " + f.getName());
+                SendToGUI("Parsing file " + f.getName());
                 ReadInWorkbook(f);
             }
         }
         connect.disconnect();
         writer.close();
+        SendToGUI("Finished!");
         return true;
     }
 
@@ -67,7 +72,7 @@ public class Parser
         Stack<File> directoryStack = new Stack<>();
         directoryStack.push(file);
 
-        System.out.println("Starting parsing directory!");
+        SendToGUI("Starting parsing directory!");
 
         //this will go through all possible paths within the directory
         while (!directoryStack.isEmpty()) {
@@ -75,9 +80,9 @@ public class Parser
             for (File a : directoryStack.pop().listFiles()) {
                 //if it is not a directory then work on it and get ssoids
                 if (!a.isDirectory()) {
-                    System.out.println("Not dir");
+                    SendToGUI("Not dir");
                     if(a.getName().endsWith(".xls")) {
-                        System.out.println("Parsing " + a.getName());
+                        SendToGUI("Parsing " + a.getName());
                         ReadInWorkbook(a);
                     }
 
@@ -91,6 +96,12 @@ public class Parser
 
     }
 
+    //appends the string to the output and adds a newline
+    private void SendToGUI (String string)
+    {
+        outputText.append(string+ "\n");
+    }
+
 
     private void ReadInWorkbook (File file)
     {
@@ -101,10 +112,7 @@ public class Parser
         Workbook workbook = null;
         FileInputStream inputStream = null;
 
-
-        System.out.println("Read in workbook");
         //flag to check if the program is in the data area:w
-
         boolean hasEnteredData = false;
         //the type of assesment like summative or formative
         String amountID = "";
@@ -120,7 +128,7 @@ public class Parser
         }
         catch (IOException e)
         {
-            System.out.println ("File not found");
+            SendToGUI("File not found");
         }
 
         Sheet firstSheet = null;
@@ -164,19 +172,19 @@ public class Parser
                         if(cell.toString().equals("") || cell.toString() == null) {
                             cell = nextRow.getCell(2);
                         }
-                        System.out.println("Evaluating: " + cell.toString());
+                        SendToGUI("Evaluating: " + cell.toString());
                         //try to get the amount id from the 2nd cell in teh evaluation row
                         try
                         {
                             amountID = MapHeaderToAmountID(cell);
                         }catch (NoSuchElementException e)
                         {
-                            System.out.println ("Amount ID not able to be parsed!");
+                            SendToGUI("Amount ID not able to be parsed!");
                         }
 
                         //try to get course id from 2nd cell in evaluation row
                         courseID = MapHeaderToCourseID(cell);
-                        System.out.println("CourseID is " + courseID);
+                        SendToGUI("CourseID is " + courseID);
                     }
                     else if (cell.toString().toLowerCase().compareTo("student") == 0)
                     {
@@ -255,7 +263,7 @@ public class Parser
                     //If not a valid student ID, replace it with the student name and write
                     //the error sql query to file so it can be fixed and then ran later to be
                     //inserted into the P2_EQS_OBS table
-                    System.out.println(stuID + " not a valid stuID. Generating ErrorSQLQuery");
+                    SendToGUI(stuID + " not a valid stuID. Generating ErrorSQLQuery");
                     try {
                         writer.write(GenerateErrorSQLQuery(GenerateAssessmentTrialID(student, amountID, courseID, convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
                         writer.newLine();
@@ -395,13 +403,13 @@ public class Parser
         if (string.contains("p2") || string.contains("practicum 2"))
         {
             string = "MEES-CESU-V001";
-            System.out.println("Format is " + string);
+            SendToGUI("Format is " + string);
             return string;
         }
         else if (string.contains("p1"))
         {
             string = "MEES-CEFO-V001";
-            System.out.println("Format is " + string);
+            SendToGUI("Format is " + string);
             return string;
         }
         else throw new NoSuchElementException();
@@ -434,7 +442,7 @@ public class Parser
             desc = "Teacher Certification";
         }
         else {
-            System.out.println("Using default Practicum 2 CourseID");
+            SendToGUI("Using default Practicum 2 CourseID");
         }
         try {
             desc = connect.getCourseIdFrom(desc);

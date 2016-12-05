@@ -149,7 +149,7 @@ public class MainForm {
 				String correctPswd = "!kmcR0ck5";
 				if(usr.toString().equals(correctUsr) && pswd.toString().equals(correctPswd)) {
 					outputTextArea.append("Credentials correct\n");
-					parser.Parse(dataPathTextBox.getText(), usr, pswd);
+					parser.Parse(dataPathTextBox.getText(), usr, pswd, outputTextArea);
 				}
 				else {
 					outputTextArea.append("Please enter correct credentials\n");
