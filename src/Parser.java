@@ -20,6 +20,11 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
+
+interface TextAreaUpdater {
+    void updateLog(String string);
+}
+
 public class Parser
 {
     private int BEGIN_DATA = 5;
@@ -28,16 +33,26 @@ public class Parser
     private ArrayList<String> qualityHeaders;
     private BufferedWriter writer;
     private JTextArea outputText;
+    private TextAreaUpdater listener;
+    StringBuffer buffer;
+    Boolean parsing = false;
 
-    public Parser() throws IOException {
-        connect = new SQLConnect();
-        qualityHeaders = new ArrayList<>();
-
+    public void setListener(TextAreaUpdater listener) {
+        this.listener = listener;
     }
 
-    public boolean Parse(String path, StringBuilder usr, StringBuilder pswd, JTextArea text) throws IOException
-    {
+    public Parser(JTextArea text) throws IOException {
+        connect = new SQLConnect();
+        qualityHeaders = new ArrayList<>();
+        buffer = new StringBuffer();
         outputText = text;
+    }
+
+    public boolean Parse(String path, StringBuilder usr, StringBuilder pswd) throws IOException
+    {
+        //outputText = text;
+        parsing = true;
+        //SendToGUI();
 
         if(!connect.connect(usr, pswd)) {
             usr.setLength(0);
@@ -47,7 +62,8 @@ public class Parser
         writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(System.getProperty("user.dir") + "/error.sql")));
         usr.setLength(0);
         pswd.setLength(0);
-        SendToGUI("Reading!");
+        buffer.append("Reading!\n");
+        listener.updateLog("Reading!\n");
         File f = new File (path);
 
         //if it is a directory traverse it else just read in the workbook directly
@@ -56,13 +72,14 @@ public class Parser
         else
         {
             if(f.getName().endsWith(".xls")) {
-                SendToGUI("Parsing file " + f.getName());
+                buffer.append("Parsing file ").append(f.getName()).append("\n");
                 ReadInWorkbook(f);
             }
         }
         connect.disconnect();
         writer.close();
-        SendToGUI("Finished!");
+        buffer.append("Finished!\n");
+        parsing = false;
         return true;
     }
 
@@ -72,7 +89,7 @@ public class Parser
         Stack<File> directoryStack = new Stack<>();
         directoryStack.push(file);
 
-        SendToGUI("Starting parsing directory!");
+        buffer.append("Starting parsing directory!\n");
 
         //this will go through all possible paths within the directory
         while (!directoryStack.isEmpty()) {
@@ -80,9 +97,10 @@ public class Parser
             for (File a : directoryStack.pop().listFiles()) {
                 //if it is not a directory then work on it and get ssoids
                 if (!a.isDirectory()) {
-                    SendToGUI("Not dir");
+                    buffer.append("Not dir\n");
                     if(a.getName().endsWith(".xls")) {
-                        SendToGUI("Parsing " + a.getName());
+                        buffer.append("Parsing ").append(a.getName()).append("\n");
+                        listener.updateLog("Parsing " + a.getName() + "\n");
                         ReadInWorkbook(a);
                     }
 
@@ -97,9 +115,23 @@ public class Parser
     }
 
     //appends the string to the output and adds a newline
-    private void SendToGUI (String string)
+    private void SendToGUI ()
     {
-        outputText.append(string+ "\n");
+        Thread thread = new Thread(() -> {
+            while(parsing) {
+                System.out.println("Updating JTextPane");
+                outputText.setText(outputText.getText() + buffer.toString());
+                outputText.update(outputText.getGraphics());
+                outputText.setCaretPosition(outputText.getDocument().getLength());
+                buffer.setLength(0);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        thread.start();
     }
 
 
@@ -128,7 +160,7 @@ public class Parser
         }
         catch (IOException e)
         {
-            SendToGUI("File not found");
+            buffer.append("File not found\n");
         }
 
         Sheet firstSheet = null;
@@ -172,19 +204,20 @@ public class Parser
                         if(cell.toString().equals("") || cell.toString() == null) {
                             cell = nextRow.getCell(2);
                         }
-                        SendToGUI("Evaluating: " + cell.toString());
+                        buffer.append("Evaluating: ").append(cell.toString()).append("\n");
+                        listener.updateLog("Evaluating: " + cell.toString() + "\n");
                         //try to get the amount id from the 2nd cell in teh evaluation row
                         try
                         {
                             amountID = MapHeaderToAmountID(cell);
                         }catch (NoSuchElementException e)
                         {
-                            SendToGUI("Amount ID not able to be parsed!");
+                            buffer.append("Amount ID not able to be parsed!\n");
                         }
 
                         //try to get course id from 2nd cell in evaluation row
                         courseID = MapHeaderToCourseID(cell);
-                        SendToGUI("CourseID is " + courseID);
+                        buffer.append("CourseID is ").append(courseID).append("\n");
                     }
                     else if (cell.toString().toLowerCase().compareTo("student") == 0)
                     {
@@ -263,7 +296,7 @@ public class Parser
                     //If not a valid student ID, replace it with the student name and write
                     //the error sql query to file so it can be fixed and then ran later to be
                     //inserted into the P2_EQS_OBS table
-                    SendToGUI(stuID + " not a valid stuID. Generating ErrorSQLQuery");
+                    buffer.append(stuID).append(" not a valid stuID. Generating ErrorSQLQuery\n");
                     try {
                         writer.write(GenerateErrorSQLQuery(GenerateAssessmentTrialID(student, amountID, courseID, convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
                         writer.newLine();
@@ -403,13 +436,13 @@ public class Parser
         if (string.contains("p2") || string.contains("practicum 2"))
         {
             string = "MEES-CESU-V001";
-            SendToGUI("Format is " + string);
+            buffer.append("Format is ").append(string).append("\n");
             return string;
         }
         else if (string.contains("p1"))
         {
             string = "MEES-CEFO-V001";
-            SendToGUI("Format is " + string);
+            buffer.append("Format is ").append(string).append("\n");
             return string;
         }
         else throw new NoSuchElementException();
@@ -442,7 +475,7 @@ public class Parser
             desc = "Teacher Certification";
         }
         else {
-            SendToGUI("Using default Practicum 2 CourseID");
+            buffer.append("Using default Practicum 2 CourseID\n");
         }
         try {
             desc = connect.getCourseIdFrom(desc);

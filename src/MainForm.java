@@ -4,10 +4,11 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 
-public class MainForm {
+
+public class MainForm implements TextAreaUpdater{
 
 	SSOIDFetchUtility utility = new SSOIDFetchUtility();
-	Parser parser = new Parser();
+	Parser parser;
 
 	private JFrame frmDataPorting;
 	private JTextField dataPathTextBox;
@@ -20,6 +21,7 @@ public class MainForm {
 	private final Action action = new SwingAction();
 	private JButton btnConvert;
 	private final Action action_1 = new SwingAction_1();
+    private volatile boolean m_UpdateScheduled = false;
 
 	/**
 	 * Launch the application.
@@ -42,7 +44,14 @@ public class MainForm {
 		initialize();
 	}
 
-	/**
+    @Override
+    public void updateLog(String string) {
+	    outputTextArea.append(string);
+	    outputTextArea.setCaretPosition(outputTextArea.getDocument().getLength());
+	    outputTextArea.update(outputTextArea.getGraphics());
+    }
+
+    /**
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
@@ -95,14 +104,24 @@ public class MainForm {
 		
 		JScrollPane outputScrollPane = new JScrollPane();
 		outputScrollPane.setBounds(10, 129, 284, 113);
+		outputScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+		outputScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		frmDataPorting.getContentPane().add(outputScrollPane);
 		
-		outputTextArea = new JTextArea();
+		outputTextArea = new JTextArea(5, 20);
 		outputScrollPane.setViewportView(outputTextArea);
 		outputTextArea.setText("");
 		outputTextArea.setEditable(false);
-		
-		JButton btnBrowse = new JButton("...");
+
+        try {
+            parser = new Parser(outputTextArea);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        parser.setListener(this);
+
+        JButton btnBrowse = new JButton("...");
 		btnBrowse.setAction(action);
 		btnBrowse.setBounds(260, 97, 35, 23);
 		frmDataPorting.getContentPane().add(btnBrowse);
@@ -120,7 +139,7 @@ public class MainForm {
 		
 		SwingAction() {
 			putValue(NAME, "SwingAction");
-			putValue(SHORT_DESCRIPTION, "Some short description");
+			putValue(SHORT_DESCRIPTION, "Browse Files");
 		}
 		public void actionPerformed(ActionEvent e) {
 			chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
@@ -149,7 +168,7 @@ public class MainForm {
 				String correctPswd = "!kmcR0ck5";
 				if(usr.toString().equals(correctUsr) && pswd.toString().equals(correctPswd)) {
 					outputTextArea.append("Credentials correct\n");
-					parser.Parse(dataPathTextBox.getText(), usr, pswd, outputTextArea);
+					parser.Parse(dataPathTextBox.getText(), usr, pswd);
 				}
 				else {
 					outputTextArea.append("Please enter correct credentials\n");
