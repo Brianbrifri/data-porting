@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Stack;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Pattern;
 import javax.swing.*;
 
@@ -20,25 +21,58 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
-public class Parser
+public class Parser extends Thread
 {
+    private ConcurrentLinkedQueue<String> outputQueue;
+
+    private String parsePath;
+    private StringBuilder usr, pswd;
+
     private int BEGIN_DATA = 5;
     private SQLConnect connect;
+
     //this holds the information about what quality level the value belongs to
     private ArrayList<String> qualityHeaders;
     private BufferedWriter writer;
     private JTextArea outputText;
 
-    public Parser() throws IOException {
+    public Parser(String path, StringBuilder usr, StringBuilder pswd) throws IOException
+    {
         connect = new SQLConnect();
         qualityHeaders = new ArrayList<>();
+        outputQueue = new ConcurrentLinkedQueue<>();
+
+        this.parsePath = path;
+        this.usr = usr;
+        this.pswd = pswd;
 
     }
 
-    public boolean Parse(String path, StringBuilder usr, StringBuilder pswd, JTextArea text) throws IOException
+    public void run ()
     {
-        outputText = text;
+        SendToGUI("Running Thread");
+        System.out.println ("Running thread");
+        //begin parsing
+        try
+        {
+            Parse(parsePath, usr, pswd);
+        }catch (IOException e)
+        {
+            SendToGUI("Failed Parsing!");
+        }
 
+        //after parsing try to join the thread
+
+    }
+
+    public String PollOutput ()
+    {
+        //System.out.println (outputBuffer.toString());
+        return outputQueue.poll();
+    }
+
+    private boolean Parse(String path, StringBuilder usr, StringBuilder pswd) throws IOException
+    {
         if(!connect.connect(usr, pswd)) {
             usr.setLength(0);
             pswd.setLength(0);
@@ -99,7 +133,7 @@ public class Parser
     //appends the string to the output and adds a newline
     private void SendToGUI (String string)
     {
-        outputText.append(string+ "\n");
+        outputQueue.add(string + "\n");
     }
 
 
@@ -202,7 +236,7 @@ public class Parser
 
                             //map the header to the measurement id as well
                             qualityHeaders.add(MapHeaderToMeasurementID(cell));
-                            System.out.println(i + ": " + cell.toString() + "\n");
+                            //SendToGUI(i + ": " + cell.toString() + "\n");
                             i++;
                             cell = nextRow.getCell(i);
                         }

@@ -7,7 +7,7 @@ import java.io.IOException;
 public class MainForm {
 
 	SSOIDFetchUtility utility = new SSOIDFetchUtility();
-	Parser parser = new Parser();
+	Parser parser;
 
 	private JFrame frmDataPorting;
 	private JTextField dataPathTextBox;
@@ -147,9 +147,24 @@ public class MainForm {
 				//**Hard code in correct credentials here**
 				String correctUsr = "umsl_cs_team";
 				String correctPswd = "!kmcR0ck5";
-				if(usr.toString().equals(correctUsr) && pswd.toString().equals(correctPswd)) {
+				if(usr.toString().equals(correctUsr) && pswd.toString().equals(correctPswd))
+				{
 					outputTextArea.append("Credentials correct\n");
-					parser.Parse(dataPathTextBox.getText(), usr, pswd, outputTextArea);
+
+
+					//create parser
+					parser = new Parser(dataPathTextBox.getText(), usr, pswd);
+
+					//start the thread
+					parser.start();
+
+					while (parser.isAlive())
+					{
+							outputTextArea.append(parser.PollOutput());
+							outputTextArea.update(outputTextArea.getGraphics());
+					}
+
+					System.out.println ("yay!");
 				}
 				else {
 					outputTextArea.append("Please enter correct credentials\n");
