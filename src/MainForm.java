@@ -51,7 +51,8 @@ public class MainForm {
 		frmDataPorting.setBounds(100, 100, 320, 384);
 		frmDataPorting.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmDataPorting.getContentPane().setLayout(null);
-		
+		frmDataPorting.setResizable(false);
+
 		dataPathTextBox = new JTextField();
 		dataPathTextBox.setBounds(55, 98, 195, 20);
 		frmDataPorting.getContentPane().add(dataPathTextBox);
