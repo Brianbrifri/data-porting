@@ -50,9 +50,7 @@ public class Parser
 
     public boolean Parse(String path, StringBuilder usr, StringBuilder pswd) throws IOException
     {
-        //outputText = text;
         parsing = true;
-        //SendToGUI();
 
         if(!connect.connect(usr, pswd)) {
             usr.setLength(0);
@@ -62,7 +60,6 @@ public class Parser
         writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(System.getProperty("user.dir") + "/error.sql")));
         usr.setLength(0);
         pswd.setLength(0);
-        buffer.append("Reading!\n");
         listener.updateLog("Reading!\n");
         File f = new File (path);
 
@@ -114,26 +111,6 @@ public class Parser
 
     }
 
-    //appends the string to the output and adds a newline
-    private void SendToGUI ()
-    {
-        Thread thread = new Thread(() -> {
-            while(parsing) {
-                System.out.println("Updating JTextPane");
-                outputText.setText(outputText.getText() + buffer.toString());
-                outputText.update(outputText.getGraphics());
-                outputText.setCaretPosition(outputText.getDocument().getLength());
-                buffer.setLength(0);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        thread.start();
-    }
-
 
     private void ReadInWorkbook (File file)
     {
@@ -160,7 +137,7 @@ public class Parser
         }
         catch (IOException e)
         {
-            buffer.append("File not found\n");
+            listener.updateLog("File not found\n");
         }
 
         Sheet firstSheet = null;
@@ -204,20 +181,12 @@ public class Parser
                         if(cell.toString().equals("") || cell.toString() == null) {
                             cell = nextRow.getCell(2);
                         }
-                        buffer.append("Evaluating: ").append(cell.toString()).append("\n");
                         listener.updateLog("Evaluating: " + cell.toString() + "\n");
                         //try to get the amount id from the 2nd cell in teh evaluation row
-                        try
-                        {
-                            amountID = MapHeaderToAmountID(cell);
-                        }catch (NoSuchElementException e)
-                        {
-                            buffer.append("Amount ID not able to be parsed!\n");
-                        }
+                        amountID = MapHeaderToAmountID(cell);
 
                         //try to get course id from 2nd cell in evaluation row
                         courseID = MapHeaderToCourseID(cell);
-                        buffer.append("CourseID is ").append(courseID).append("\n");
                     }
                     else if (cell.toString().toLowerCase().compareTo("student") == 0)
                     {
@@ -296,7 +265,7 @@ public class Parser
                     //If not a valid student ID, replace it with the student name and write
                     //the error sql query to file so it can be fixed and then ran later to be
                     //inserted into the P2_EQS_OBS table
-                    buffer.append(stuID).append(" not a valid stuID. Generating ErrorSQLQuery\n");
+                    listener.updateLog(stuID + " not a valid stuID. Generating ErrorSQLQuery\n");
                     try {
                         writer.write(GenerateErrorSQLQuery(GenerateAssessmentTrialID(student, amountID, courseID, convertCompletionDateToTerm(completionDate)), evaluator, "RATER", measurement, header, null, completionDate));
                         writer.newLine();
@@ -373,7 +342,7 @@ public class Parser
         } else if (data.contains("revision")) {
             return "MOTS-CLEV-NA";
         } else if (data.contains("new"))  {
-            return "MOTS-CLEV-EME1";
+            return "MOTS-CLEV-EME1.5";
         } else {
             //return N/A for any other value
             //this may not be the correct approach
@@ -429,23 +398,21 @@ public class Parser
 
     //maps the header for the completion of a evaluation to a amount id
     //p1 being formative and p2 being summative
-    private String MapHeaderToAmountID(Cell cell) throws NoSuchElementException
+    private String MapHeaderToAmountID(Cell cell)
     {
         String string = cell.toString().toLowerCase();
 
         if (string.contains("p2") || string.contains("practicum 2"))
         {
             string = "MEES-CESU-V001";
-            buffer.append("Format is ").append(string).append("\n");
             return string;
         }
         else if (string.contains("p1"))
         {
             string = "MEES-CEFO-V001";
-            buffer.append("Format is ").append(string).append("\n");
             return string;
         }
-        else throw new NoSuchElementException();
+        else return "MEES-CESU-V001";
     }
 
     //gets information about string values and uses them to find the course
@@ -455,7 +422,7 @@ public class Parser
     {
 
         String string = cell.toString().toLowerCase();
-        String desc = "Practicum 2";
+        String desc = "Teacher Certification";
 
         if (string.contains("health"))
         {
@@ -475,7 +442,7 @@ public class Parser
             desc = "Teacher Certification";
         }
         else {
-            buffer.append("Using default Practicum 2 CourseID\n");
+            System.out.println("Using default Teacher Certification CourseID\n");
         }
         try {
             desc = connect.getCourseIdFrom(desc);
@@ -579,5 +546,4 @@ public class Parser
         }
         return term;
     }
-
 }

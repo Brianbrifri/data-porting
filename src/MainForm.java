@@ -7,7 +7,6 @@ import java.io.IOException;
 
 public class MainForm implements TextAreaUpdater{
 
-	SSOIDFetchUtility utility = new SSOIDFetchUtility();
 	Parser parser;
 
 	private JFrame frmDataPorting;
@@ -21,7 +20,6 @@ public class MainForm implements TextAreaUpdater{
 	private final Action action = new SwingAction();
 	private JButton btnConvert;
 	private final Action action_1 = new SwingAction_1();
-    private volatile boolean m_UpdateScheduled = false;
 
 	/**
 	 * Launch the application.
@@ -42,6 +40,10 @@ public class MainForm implements TextAreaUpdater{
 	 */
 	private MainForm() throws IOException {
 		initialize();
+		outputTextArea.append("Welcome! Please enter your credentials\nand choose a file or directory to convert\n");
+		outputTextArea.append("If you have previously ran this program from this directory\n");
+        outputTextArea.append("please be sure to save your error.sql file to another name or dir\n");
+        outputTextArea.append("as it will be overwritten if you convert again without doing so\n");
 	}
 
     @Override
@@ -128,9 +130,7 @@ public class MainForm implements TextAreaUpdater{
 		frmDataPorting.getContentPane().add(btnBrowse);
 		
 		btnConvert = new JButton("Convert");
-//		btnConvert.addActionListener(arg0 -> {
-//
-//		});
+
 		btnConvert.setAction(action_1);
 		btnConvert.setBounds(108, 253, 89, 23);
 		frmDataPorting.getContentPane().add(btnConvert);
@@ -152,14 +152,11 @@ public class MainForm implements TextAreaUpdater{
 	private class SwingAction_1 extends AbstractAction {
 		SwingAction_1() {
 			putValue(NAME, "Convert");
-			putValue(SHORT_DESCRIPTION, "Some short description");
+			putValue(SHORT_DESCRIPTION, "Start converting your files to the DB");
 		}
 		public void actionPerformed(ActionEvent e) {
 			// Do some converting!
 			System.out.println(dataPathTextBox.getText());
-			//utility.excelFilePath = dataPathTextBox.getText();
-			//utility.outputFilePath = "~/home/b-kizzle/";
-			//System.out.println(utility.excelFilePath);
 			try {
 				StringBuilder usr = new StringBuilder(sqlUserTextBox.getText());
 				StringBuilder pswd = new StringBuilder(sqlPassTextBox.getText());
@@ -177,7 +174,6 @@ public class MainForm implements TextAreaUpdater{
 				}
 				usr.setLength(0);
 				pswd.setLength(0);
-//				utility.run(dataPathTextBox.getText(), "/home/b-kizzle/SSOIDList.txt");
 			} catch (IOException ex) {
 				ex.printStackTrace();
 			}
